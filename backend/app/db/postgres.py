@@ -1,5 +1,3 @@
-"""PostgreSQL async engine, session factory, and table initialisation."""
-
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import get_settings
@@ -26,20 +24,17 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def init_db() -> None:
-    """Create all tables if they don't exist. Called once at application startup."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables initialised")
 
 
 async def close_db() -> None:
-    """Dispose the engine connection pool. Called on application shutdown."""
     await engine.dispose()
     logger.info("Database connection pool closed")
 
 
 async def get_db() -> AsyncSession:
-    """FastAPI dependency that yields a scoped async session."""
     async with AsyncSessionLocal() as session:
         try:
             yield session

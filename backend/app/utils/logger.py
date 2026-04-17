@@ -1,5 +1,3 @@
-"""Centralised logger factory used across all services and modules."""
-
 import logging
 import sys
 

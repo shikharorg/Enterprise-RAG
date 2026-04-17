@@ -1,12 +1,10 @@
-"""SQLAlchemy ORM models for users and roles."""
-
 import uuid
+import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import String, DateTime, Enum as SAEnum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-import enum
 
 
 class RoleEnum(str, enum.Enum):
