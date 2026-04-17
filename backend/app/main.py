@@ -7,6 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import auth, health
 from app.config import get_settings
 from app.db.postgres import close_db, init_db
+from app.retrieval.dense import load_dense_client
+from app.retrieval.embedder import load_embedder
+from app.retrieval.reranker import load_reranker
+from app.retrieval.sparse import load_sparse_index
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -20,6 +24,10 @@ async def lifespan(app: FastAPI):
     global rag_semaphore
     rag_semaphore = asyncio.Semaphore(5)
     await init_db()
+    load_embedder()
+    load_reranker()
+    load_dense_client()
+    load_sparse_index()
     logger.info("Application startup complete")
     yield
     await close_db()
