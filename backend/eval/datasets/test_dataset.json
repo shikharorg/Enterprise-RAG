@@ -1,0 +1,17 @@
+[
+  {
+    "question": "What is the company's parental leave policy?",
+    "role": "hr",
+    "ground_truth": "Employees are entitled to 16 weeks of paid parental leave."
+  },
+  {
+    "question": "How do I set up the local development environment?",
+    "role": "engineering",
+    "ground_truth": "Clone the repository, run docker-compose up, then install dependencies with pip install -r requirements.txt."
+  },
+  {
+    "question": "What was the Q3 net revenue?",
+    "role": "finance",
+    "ground_truth": "Q3 net revenue was $4.2 million, up 12% year-over-year."
+  }
+]
