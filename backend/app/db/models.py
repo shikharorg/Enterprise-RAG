@@ -2,7 +2,7 @@ import uuid
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import String, DateTime, Enum as SAEnum, ForeignKey
+from sqlalchemy import String, DateTime, Integer, Enum as SAEnum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -36,6 +36,9 @@ class User(Base):
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    documents: Mapped[list["Document"]] = relationship(
+        back_populates="uploader", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email} role={self.role}>"
@@ -62,3 +65,27 @@ class RefreshToken(Base):
 
     def __repr__(self) -> str:
         return f"<RefreshToken id={self.id} user_id={self.user_id}>"
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    name: Mapped[str] = mapped_column(String(512), nullable=False)
+    department: Mapped[RoleEnum] = mapped_column(SAEnum(RoleEnum), nullable=False, index=True)
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+    chunk_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
+    uploader: Mapped["User"] = relationship(back_populates="documents")
+
+    def __repr__(self) -> str:
+        return f"<Document id={self.id} name={self.name} department={self.department}>"

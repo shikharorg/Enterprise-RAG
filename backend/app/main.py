@@ -4,9 +4,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, health
+from app.api.routes import admin, auth, health
 from app.config import get_settings
 from app.db.postgres import close_db, init_db
+from app.generation.generator import load_generator
 from app.retrieval.dense import load_dense_client
 from app.retrieval.embedder import load_embedder
 from app.retrieval.reranker import load_reranker
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     load_reranker()
     load_dense_client()
     load_sparse_index()
+    load_generator()
     logger.info("Application startup complete")
     yield
     await close_db()
@@ -46,9 +48,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[_s.cors_origin],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "DELETE", "PATCH"],
     allow_headers=["Content-Type"],
 )
 
 app.include_router(health.router)
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(admin.router, prefix="/api/v1")
