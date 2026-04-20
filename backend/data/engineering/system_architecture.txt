@@ -1,0 +1,37 @@
+Apex Systems Platform Architecture
+Revision 4.2 — January 2026
+
+This document is the authoritative reference for the Apex Systems production architecture. It is maintained by the Platform Engineering team and reviewed quarterly.
+
+Overview
+The Apex platform is a multi-tenant SaaS product that ingests, transforms, and serves analytical data for enterprise customers in financial services, healthcare, and the public sector. The system is organized into four planes: ingestion, storage, query, and control. Each plane is deployed as a set of independently releasable services. Planes communicate exclusively through documented APIs and asynchronous event streams.
+
+Runtime and deployment
+All services run on Kubernetes clusters hosted in AWS across three regions: us-east-1 (primary), us-west-2 (warm standby), and eu-central-1 (European data residency). Each region runs an EKS cluster with at least three worker node groups: general-purpose (m6i.large), memory-optimized (r6i.xlarge) for the query engine, and compute-optimized (c6i.2xlarge) for ingestion workers. Autoscaling is driven by Karpenter, targeting 60% CPU utilization.
+
+Ingestion plane
+Customer data enters through the ingestion API, which accepts batch uploads up to 5 GB and streaming events via an S3-compatible endpoint. Uploaded files are placed in a per-tenant staging bucket with server-side encryption using a customer-managed KMS key. The ingestion workers, written in Rust, parse Parquet, CSV, and JSON formats, enforce the tenant schema, and publish normalized records to a partitioned Kafka topic. Dead-letter records are routed to a tenant-specific DLQ with a 14-day retention.
+
+Storage plane
+Normalized records land in an Apache Iceberg data lake on S3. A catalog service built on top of AWS Glue tracks schema evolution, partition metadata, and compaction state. Hot partitions are cached in Redis, and summary aggregates are written to TimescaleDB for low-latency dashboards. Backups of the catalog run hourly using AWS Backup and are replicated cross-region with a 15-minute RPO.
+
+Query plane
+Customer queries are served by Trino running in dedicated clusters per pricing tier. Query planning is enhanced by a cost model that is calibrated nightly against actual execution statistics. A caching layer backed by Redis serves sub-100ms responses for dashboard tile queries and reuses previously computed aggregates when filter predicates match.
+
+Control plane
+The control plane, written in Go, manages tenants, users, roles, API keys, billing, and audit logs. It is backed by Aurora PostgreSQL with multi-AZ failover. All write operations produce an audit event that is signed, hashed, and appended to an immutable CloudWatch Logs stream with customer-accessible export.
+
+Authentication and authorization
+Authentication uses OIDC with support for Okta, Azure AD, and Google Workspace as identity providers. Authorization is role-based with three built-in roles (administrator, analyst, viewer) and customer-defined fine-grained roles evaluated by an OPA sidecar on every request. JWTs are short-lived (15 minutes) and refreshed via an HTTP-only cookie.
+
+Observability
+Every service emits structured JSON logs shipped to Datadog via the Fluent Bit agent. Metrics are collected in Prometheus, federated across regions, and alerted through PagerDuty. Distributed traces use OpenTelemetry SDKs, sampled at 10% with a 100% sampling rule for errors.
+
+Reliability targets
+The platform publishes a 99.9% monthly availability SLO for the control plane and a 99.95% SLO for the query plane. Error budgets are reviewed monthly and trigger a freeze on non-critical deployments when breached.
+
+Data boundaries
+Tenant data is strictly partitioned by tenant_id at the storage and query layers. Cross-tenant queries are rejected at the planner level. Row-level security policies are enforced inside Trino via session properties populated from the JWT.
+
+Deprecated components
+The legacy ElasticSearch cluster used for full-text search is scheduled for retirement in Q3 2026 and should not receive new integrations.

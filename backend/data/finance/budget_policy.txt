@@ -1,0 +1,41 @@
+Apex Systems Budget Policy
+Fiscal Year 2026 — Effective January 1, 2026
+
+This policy defines how annual and quarterly budgets are constructed, approved, and managed at Apex Systems. It applies to every cost center, subsidiary, and consolidated entity.
+
+Budget cycle
+The fiscal year at Apex runs from January 1 through December 31. The annual budget cycle begins on September 1 with the delivery of top-down revenue and headcount targets from the CFO to each function. Functional leaders build bottoms-up plans and submit them by October 15. A week of consolidation and iteration follows, and the board of directors approves the final budget at the December board meeting. Department leaders communicate approved budgets to their teams by December 20.
+
+Reforecasts
+A formal reforecast is produced in Q2 and Q3. Each reforecast revises the full-year outlook for revenue, operating expense, headcount, and cash. Material variances — defined as greater than 5% on any revenue line or greater than $250,000 on any expense line — require a written explanation in the variance memo submitted to the finance business partner.
+
+Budget structure
+Budgets are organized by cost center, with each cost center mapped to exactly one department owner and one finance business partner. Expenses are further classified by natural account (personnel, software, professional services, facilities, marketing, travel, and other). Every expense transaction must carry a cost center, a natural account, and, where applicable, a project tag.
+
+Capitalized versus operating expense
+Software developed for internal use is capitalized when a project has reached the application development stage, has a defined budget, and has a reasonable expectation of future use. The finance team maintains the capitalization register and reviews eligibility quarterly. Cloud infrastructure, third-party SaaS subscriptions, and routine maintenance are treated as operating expense.
+
+Headcount planning
+Headcount is planned at the role level with a target start date and a fully loaded cost that includes base salary, bonus, benefits, and payroll taxes. Every open role requires a written business case and approval from the functional leader. Net new headcount adds above the approved plan require CFO approval; replacement hires within the approved plan do not.
+
+Approval thresholds
+The following spend authorities apply, inclusive of all related commitments:
+  - Individual contributors: up to $500 per transaction, within approved budget.
+  - Managers: up to $5,000 per transaction.
+  - Directors: up to $25,000 per transaction.
+  - Vice presidents: up to $100,000 per transaction.
+  - Chief Financial Officer: up to $500,000 per transaction.
+  - Chief Executive Officer and board of directors: greater than $500,000 and any unbudgeted spend above $250,000.
+Transactions that span multiple fiscal years are evaluated based on the total committed amount, not the annual amount.
+
+Vendor contracts
+Contracts with annual value above $50,000 require review by the procurement team and legal counsel before signature. Vendor data processing agreements are also reviewed by the security and privacy functions. Multi-year commitments require an early termination analysis and a signed master service agreement.
+
+Budget transfers
+Within a department, transfers between natural accounts of up to $10,000 may be approved by the department owner. Transfers greater than $10,000, or any transfer between departments, require finance business partner approval and are recorded in the budget change log.
+
+Monitoring and variance
+Finance business partners publish monthly actual-versus-budget reports on the fifth business day after close. Department owners are expected to review variances and submit a variance memo for any line that is more than 10% or $25,000 off plan, whichever is greater.
+
+Non-compliance
+Expenses submitted outside of policy will be returned to the requester and may be charged personally. Repeated non-compliance is a performance issue and will be addressed with the employee's manager.

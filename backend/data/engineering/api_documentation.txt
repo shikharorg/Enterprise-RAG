@@ -1,0 +1,42 @@
+Apex Systems Public API — Developer Documentation
+API version v2 — Revision January 2026
+
+The Apex Systems Public API lets customers ingest data, query datasets, manage tenants, and subscribe to audit events. This document is a concise reference for developers integrating with the v2 API. The full OpenAPI specification is published at https://api.apex-systems.example/openapi.json.
+
+Base URL and versioning
+The API is served at https://api.apex-systems.example/v2. All breaking changes go through a new major version; a deprecated version is supported for at least 12 months after the successor is released. Non-breaking additions may appear in the current version at any time and are announced in the developer changelog.
+
+Authentication
+Every request requires a bearer token in the Authorization header. Two token types are supported:
+  - API keys, which represent a service account. Issued from the administrator console, scoped to one or more roles, and valid until revoked.
+  - OAuth 2.0 access tokens, obtained through the authorization code flow with PKCE. These are short-lived (15 minutes) and refreshable for up to 30 days.
+Unauthenticated requests receive a 401. Requests that authenticate successfully but lack the required role receive a 403.
+
+Rate limits
+The default rate limit is 600 requests per minute per tenant, with a burst of 60 requests per second. Higher limits are available on the Enterprise plan. Rate-limited responses return HTTP 429 and include the headers X-RateLimit-Limit, X-RateLimit-Remaining, and Retry-After. Clients should implement exponential backoff with jitter.
+
+Error model
+Error responses follow RFC 7807. The body contains a machine-readable type URI, a human-readable title, the HTTP status, and an optional detail. Each error carries a correlation_id that customers should include when opening support cases.
+
+Ingestion endpoints
+POST /datasets/{dataset_id}/records accepts a JSON array of up to 1,000 records, with each record bounded to 1 MB. Records are validated against the dataset schema and ingested asynchronously; the response returns a submission_id that can be polled through GET /submissions/{submission_id}.
+POST /datasets/{dataset_id}/files creates a pre-signed S3 URL for uploading larger Parquet, CSV, or JSON files up to 5 GB.
+
+Query endpoints
+POST /datasets/{dataset_id}/query accepts a SQL string and optional query parameters. The response is a server-sent events stream that emits rows as they are produced, followed by a final statistics event. Queries are subject to a maximum execution time of 10 minutes; long-running analytics should use the asynchronous /jobs endpoint.
+GET /datasets/{dataset_id}/schema returns the current schema, including column names, types, and descriptions.
+
+Administration endpoints
+POST /users, PATCH /users/{user_id}, and DELETE /users/{user_id} manage tenant users. POST /roles and PATCH /roles/{role_id} manage role definitions. POST /api-keys issues a new service account key; the plaintext secret is returned exactly once and must be stored by the caller.
+
+Webhooks
+Customers may subscribe to system events (ingestion completion, schema changes, audit events) at POST /webhooks. Payloads are signed with HMAC-SHA256 using the webhook secret. Receivers must verify the signature and the X-Apex-Timestamp header, which is valid for 5 minutes.
+
+Pagination
+List endpoints return a next_cursor when more results are available. Pass the cursor back as the cursor query parameter to fetch the next page. Page sizes up to 200 are supported.
+
+SDKs
+Official SDKs are available for Python, TypeScript, Java, and Go under an Apache-2.0 license. Each SDK implements retries, rate-limit handling, and automatic token refresh. Community SDKs for Ruby and .NET are linked from the developer portal.
+
+Support
+Developers can reach the API team through the in-product support widget or by opening a ticket in the customer portal. Severity 1 integration outages are handled through the on-call pager with a 15-minute response target.

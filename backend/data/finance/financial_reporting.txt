@@ -1,0 +1,37 @@
+Apex Systems Financial Reporting Policy
+Effective January 1, 2026
+
+This policy defines the schedule, content, and controls for all internal and external financial reporting produced by Apex Systems. It applies to the corporate accounting, FP&A, investor relations, and revenue operations teams.
+
+Accounting framework
+Apex Systems prepares its financial statements in accordance with United States Generally Accepted Accounting Principles. The company is a private entity and is not required to file with the SEC, but it follows public company standards in anticipation of a future registration. External auditors are engaged annually and issue an unqualified opinion on the consolidated financial statements.
+
+Monthly close
+The accounting team executes a five business day close after the last day of each calendar month. The close checklist covers cash reconciliations, accruals, prepaid amortization, deferred revenue, commissions expense, intercompany eliminations, and foreign currency remeasurement. A daily stand-up is held during close week to track open items. Management review packets are circulated to the CFO and CEO on business day six.
+
+Quarterly and annual reporting
+Quarterly financial statements — balance sheet, income statement, statement of cash flows, and statement of stockholders' equity — are produced within 20 business days of each quarter end and distributed to the board, lenders, and major investors. A full audited set of annual financial statements is delivered within 90 days of the fiscal year end. Footnotes include revenue disaggregation by product and geography, stock-based compensation, segment reporting, and related-party transactions.
+
+Revenue recognition
+Apex recognizes revenue in accordance with ASC 606. Subscription revenue is recognized ratably over the contract term beginning on the date access is granted. Professional services revenue is recognized as services are delivered, generally using an input-based measure of progress. Usage-based revenue above the committed minimum is recognized in the period consumed. Contract modifications are evaluated for termination, prospective, or cumulative catch-up treatment.
+
+Deferred revenue and billings
+Invoices issued in advance of service delivery create deferred revenue, which is released on a daily amortization schedule. The billings balance is reconciled monthly to the subscription management system. Any discrepancy greater than $10,000 is investigated by the revenue operations analyst and documented in the close file.
+
+Key performance indicators
+Leadership tracks the following KPIs monthly: annual recurring revenue, net new ARR, gross dollar retention, net dollar retention, customer acquisition cost, magic number, free cash flow, burn multiple, and rule-of-40. Definitions are documented in the metrics dictionary maintained by FP&A. Changes to definitions require CFO approval and are disclosed with the period they take effect.
+
+Board reporting
+A monthly flash report is distributed to the board on the eighth business day after month end, covering revenue, bookings, cash, and operating metrics. A full management report is distributed quarterly, including a CEO memo, a detailed P&L, a cash flow forecast, and a department-level operating review.
+
+Budgeting and forecasting
+FP&A produces a rolling 18-month forecast that is refreshed monthly. The forecast anchors to the board-approved annual plan and is reconciled to actuals within the close package. Scenario models — base, upside, downside — are refreshed at each reforecast.
+
+Internal controls
+Apex operates a SOX-lite control framework reviewed annually by the audit committee. Controls cover journal entry approval, access provisioning, change management, and segregation of duties. Key reports include the access review report, the manual journal entry log, and the bank reconciliation summary. Control testing is performed by the internal audit team, which reports independently to the audit committee.
+
+Tax and regulatory
+The tax team files federal, state, and local income tax returns; sales and use tax returns in applicable jurisdictions; and statutory filings for foreign subsidiaries. Transfer pricing documentation is refreshed annually.
+
+Retention
+All accounting records, journal entries, and supporting documentation are retained for a minimum of seven years in the document management system, with immutable audit trails and role-based access.

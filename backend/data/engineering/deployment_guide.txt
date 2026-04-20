@@ -1,0 +1,34 @@
+Apex Systems Deployment Guide
+Revision 2.1 — January 2026
+
+This guide is the authoritative reference for shipping code to any environment operated by Apex Systems. It applies to all engineers who merge code to the monorepo.
+
+Environments
+Apex operates four environments: local, staging, canary, and production. Local is a docker-compose profile each engineer runs on their workstation. Staging is a full Kubernetes environment in us-east-1 that mirrors production topology but serves synthetic data. Canary is a 5% slice of production traffic served from the same cluster but routed through a separate service revision. Production serves 100% of customer traffic across three regions.
+
+Source control
+All services, libraries, and infrastructure definitions live in a single monorepo hosted on GitHub. Developers branch from main using the pattern name/ticket-short-description. Direct pushes to main are disallowed. Every change is reviewed through a pull request that requires at least one approval from a CODEOWNERS entry plus passing required status checks.
+
+Continuous integration
+CI runs on GitHub Actions. The standard pipeline executes on every pull request and includes: Bazel build and unit tests, integration tests against ephemeral Kind clusters, static analysis (golangci-lint, ruff, clippy), security scans (Semgrep, Trivy on container images), and SBOM generation. Pipelines must complete in under 25 minutes. Any step that exceeds 5 minutes consistently triggers a performance review by the DevEx team.
+
+Continuous delivery
+Merges to main trigger a progressive delivery pipeline via Argo CD. Builds are signed with cosign and pushed to the internal ECR registry. Deployment to staging is fully automatic. Deployment to canary requires a human click in Argo and is permitted only during business hours (09:00 to 17:00 Pacific) unless the change is a rollback. Promotion from canary to production runs automatically 30 minutes after the canary deployment if no SLO-based alerts have fired.
+
+Feature flags
+All risky changes must be gated behind a LaunchDarkly feature flag. Flags default to off in production and are enabled progressively by tenant cohort. A flag that is fully rolled out and stable for 30 days must be removed; the DevEx team runs a weekly report of stale flags.
+
+Secrets and configuration
+Secrets are stored in AWS Secrets Manager and injected at pod startup by the External Secrets operator. Application configuration uses Helm values overlaid per environment. Secrets and configuration are never baked into container images or committed to the repository. Any accidental commit of a secret triggers an automatic rotation and an incident.
+
+Rollback
+Every deployment records an immutable revision hash and Helm release. A one-click rollback in Argo CD reverts to the previous stable revision and is the preferred remediation for newly deployed regressions. Database migrations are always designed to be forward-compatible with the previous application revision.
+
+On-call
+Each service has a named primary and secondary on-call rotation in PagerDuty, rotating weekly. On-call engineers are expected to acknowledge within 5 minutes and engage within 15 minutes for severity 1 alerts. Severity 1 is customer-impacting and requires an incident commander; severity 2 is degraded service; severity 3 is non-customer-impacting.
+
+Incident management
+All severity 1 and severity 2 incidents require a blameless postmortem document published within five business days. The postmortem includes a timeline, root cause, contributing factors, and a list of action items with named owners and due dates. Action items are tracked in Jira and reviewed at the monthly reliability review.
+
+Change freeze
+Apex observes a change freeze from December 20 through January 2 each year and during designated high-sensitivity customer events. Only rollback and security-critical changes may ship during a freeze, and each requires VP of Engineering approval.

@@ -1,0 +1,36 @@
+Apex Systems Employee Handbook
+Effective January 1, 2026
+
+Welcome to Apex Systems. This handbook summarizes the policies, expectations, and benefits that apply to every full-time and part-time employee. It is not a contract of employment, and the company reserves the right to revise any policy at any time. Employees receive written notice of material changes through the HR portal.
+
+Mission and values
+Apex Systems builds enterprise data infrastructure for regulated industries. Our four core values are: customer obsession, technical rigor, candor, and ownership. Every performance review is anchored to these values, and they influence hiring, promotion, and termination decisions.
+
+Work hours and location
+Core collaboration hours are 10:00 to 16:00 in each employee's local time zone. Employees may structure the remaining hours around personal obligations as long as customer commitments are met. Apex operates on a hybrid schedule: engineers, designers, and product managers are expected in the office two days per week; sales, customer success, and go-to-market roles four days per week. Fully remote arrangements require VP approval and a documented business case.
+
+Onboarding
+New hires complete a structured 30-60-90 day plan with their manager. Week one covers security training, compliance modules, and system access. By day 30, each new hire should have shipped one measurable deliverable. HR schedules a 90-day check-in to confirm the hire is on track and to gather feedback on the onboarding experience.
+
+Performance reviews
+Reviews occur twice per year, in March and September. Managers gather peer feedback through the Lattice platform, write a calibrated narrative, and deliver the review in a one-hour conversation. Ratings follow a five-point scale: exceptional, exceeds expectations, meets expectations, developing, and unsatisfactory. Compensation adjustments are tied to the September cycle; promotion decisions may occur in either cycle.
+
+Professional development
+Every employee receives an annual learning and development budget of $2,000 that may be applied to conferences, courses, books, or coaching. Manager approval is required for individual expenses above $500. The company also sponsors internal tech talks every Friday and an annual engineering summit.
+
+Code of conduct
+Harassment, discrimination, and retaliation are grounds for immediate termination. Apex maintains an anonymous reporting channel operated by a third-party vendor. All complaints are investigated within five business days by an HR Business Partner not associated with the reporting chain.
+
+Equipment and IT
+Apex provides a company laptop, monitor, and peripherals. Employees may select between MacBook Pro, ThinkPad X1, or Dell XPS on issue. Personal use of company equipment is permitted in moderation; any software installed must pass the IT security review. Loss or damage must be reported to the IT Help Desk within 24 hours.
+
+Confidentiality and data handling
+All employees sign a confidentiality agreement at hire. Customer data may only be accessed from company-managed devices and through approved channels. Screenshots, exports, or copies of customer data to personal devices are strictly prohibited. Violations are reported to the Chief Information Security Officer and may result in termination.
+
+Attendance and absence
+Unplanned absences should be reported to the direct manager before the start of the workday via Slack or email. Three consecutive unexplained absences are treated as job abandonment.
+
+Termination and resignation
+Employees are asked to provide two weeks of written notice. Apex conducts an exit interview with the HR Business Partner on the final day of employment. Company equipment, badges, and credentials are collected during the offboarding session. Final pay, including any accrued and unused PTO, is disbursed on the next standard pay date.
+
+Policy questions should be directed to the HR Business Partner assigned to each department.
