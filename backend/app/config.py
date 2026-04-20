@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -25,10 +26,16 @@ class Settings(BaseSettings):
     app_env: str = "development"
     cors_origin: str = "http://localhost:5173"
 
+    langchain_tracing_v2: bool = True
+    langchain_api_key: str = ""
+    langchain_project: str = "rag-enterprise"
+    langchain_endpoint: str = "https://api.smith.langchain.com"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     @property
@@ -38,7 +45,27 @@ class Settings(BaseSettings):
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
+    @property
+    def langsmith_enabled(self) -> bool:
+        return (
+            self.app_env == "production"
+            and self.langchain_tracing_v2
+            and bool(self.langchain_api_key)
+        )
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def configure_langsmith() -> None:
+    s = get_settings()
+    if s.langsmith_enabled:
+        os.environ["LANGCHAIN_TRACING_V2"] = "true"
+        os.environ["LANGCHAIN_API_KEY"] = s.langchain_api_key
+        os.environ["LANGCHAIN_PROJECT"] = s.langchain_project
+        os.environ["LANGCHAIN_ENDPOINT"] = s.langchain_endpoint
+    else:
+        os.environ["LANGCHAIN_TRACING_V2"] = "false"
+        os.environ.pop("LANGCHAIN_API_KEY", None)

@@ -15,7 +15,7 @@ api.interceptors.response.use(
         await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
         return api(original)
       } catch {
-        window.location.href = '/login'
+        return Promise.reject(err)
       }
     }
     return Promise.reject(err)

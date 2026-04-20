@@ -39,3 +39,6 @@ postgres_data/
 # Test coverage
 .coverage
 htmlcov/
+
+# env
+envrag/

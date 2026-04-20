@@ -1,9 +1,11 @@
 from collections.abc import AsyncIterator
 
+from langsmith import traceable
+
 from app.auth.rbac import get_allowed_collections
 from app.db.models import RoleEnum
 from app.generation.generator import generate, generate_stream
-from app.main import rag_semaphore
+from app.state import rag_semaphore
 from app.retrieval.hybrid import hybrid_search
 from app.retrieval.reranker import rerank
 from app.utils.logger import get_logger
@@ -11,6 +13,7 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
+@traceable(name="run_query", run_type="chain")
 async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
     allowed_roles = get_allowed_collections(role)
 
@@ -24,6 +27,7 @@ async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
     return result
 
 
+@traceable(name="run_query_stream", run_type="chain")
 async def run_query_stream(
     query: str, role: RoleEnum, top_k: int
 ) -> tuple[AsyncIterator[str], list[dict]]:

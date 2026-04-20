@@ -2,7 +2,7 @@ import uuid
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import String, DateTime, Integer, Enum as SAEnum, ForeignKey
+from sqlalchemy import String, DateTime, Integer, Float, Enum as SAEnum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -11,6 +11,7 @@ class RoleEnum(str, enum.Enum):
     hr = "hr"
     engineering = "engineering"
     finance = "finance"
+    admin = "admin"
 
 
 class Base(DeclarativeBase):
@@ -89,3 +90,25 @@ class Document(Base):
 
     def __repr__(self) -> str:
         return f"<Document id={self.id} name={self.name} department={self.department}>"
+
+
+class EvalResult(Base):
+    __tablename__ = "eval_results"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
+    metric_name: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    score: Mapped[float] = mapped_column(Float, nullable=False)
+    run_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        index=True,
+    )
+
+    def __repr__(self) -> str:
+        return f"<EvalResult run_id={self.run_id} metric={self.metric_name} score={self.score:.4f}>"

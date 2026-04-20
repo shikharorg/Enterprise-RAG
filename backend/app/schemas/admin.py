@@ -32,3 +32,18 @@ class UserAdminResponse(BaseModel):
 
 class SetActiveRequest(BaseModel):
     is_active: bool
+
+
+class EvalResultResponse(BaseModel):
+    id: uuid.UUID
+    run_id: uuid.UUID
+    metric_name: str
+    score: float
+    run_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class EvalRunStartResponse(BaseModel):
+    status: str
+    started_at: datetime

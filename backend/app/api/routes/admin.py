@@ -6,14 +6,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_current_user
 from app.db.models import RoleEnum, User
 from app.db.postgres import get_db
-from app.schemas.admin import DocumentListResponse, DocumentResponse, SetActiveRequest, UserAdminResponse
-from app.services.admin_service import delete_document, list_documents, list_users, set_user_active
+from app.schemas.admin import (
+    DocumentListResponse,
+    DocumentResponse,
+    EvalResultResponse,
+    EvalRunStartResponse,
+    SetActiveRequest,
+    UserAdminResponse,
+)
+from app.services.admin_service import (
+    ServerUnderLoadError,
+    delete_document,
+    get_eval_results,
+    list_documents,
+    list_users,
+    set_user_active,
+    trigger_eval_run,
+)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 def _require_admin(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role not in (RoleEnum.hr, RoleEnum.engineering, RoleEnum.finance):
+    if current_user.role != RoleEnum.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return current_user
 
@@ -24,10 +39,8 @@ async def get_documents(
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(_require_admin),
+    _: User = Depends(_require_admin),
 ):
-    if current_user.role != RoleEnum.hr and department and department != current_user.role:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot view other departments")
     docs, total = await list_documents(db, department=department, offset=offset, limit=limit)
     return DocumentListResponse(
         documents=[DocumentResponse.model_validate(d) for d in docs],
@@ -70,3 +83,29 @@ async def update_user_active(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     return UserAdminResponse.model_validate(user)
+
+
+@router.get("/eval/results", response_model=list[EvalResultResponse])
+async def get_eval_results_route(
+    metric_name: str | None = Query(default=None, max_length=64),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(_require_admin),
+):
+    rows = await get_eval_results(db, metric_name=metric_name, limit=limit)
+    return [EvalResultResponse.model_validate(r) for r in rows]
+
+
+@router.post(
+    "/eval/run",
+    response_model=EvalRunStartResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def post_eval_run(_: User = Depends(_require_admin)):
+    try:
+        result = await trigger_eval_run()
+    except ServerUnderLoadError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    return EvalRunStartResponse(**result)

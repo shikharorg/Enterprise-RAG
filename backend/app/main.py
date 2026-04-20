@@ -1,29 +1,27 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import admin, auth, health, ingest, query
-from app.config import get_settings
+from app.config import configure_langsmith, get_settings
 from app.db.postgres import close_db, init_db
 from app.generation.generator import load_generator
 from app.retrieval.dense import load_dense_client
 from app.retrieval.embedder import load_embedder
 from app.retrieval.reranker import load_reranker
 from app.retrieval.sparse import load_sparse_index
+from app.state import init_semaphore
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 _s = get_settings()
 
-rag_semaphore: asyncio.Semaphore
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global rag_semaphore
-    rag_semaphore = asyncio.Semaphore(5)
+    configure_langsmith()
+    init_semaphore()
     await init_db()
     load_embedder()
     load_reranker()

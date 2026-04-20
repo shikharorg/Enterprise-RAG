@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import csv
 import json
+import uuid
 from datetime import datetime, timezone
 
 from datasets import Dataset
@@ -18,6 +19,8 @@ from ragas.metrics import (
 )
 
 from app.config import get_settings
+from app.db.models import EvalResult
+from app.db.postgres import AsyncSessionLocal
 from app.ingestion.metadata import load_pii_engines
 from app.retrieval.embedder import load_embedder
 from app.retrieval.dense import load_dense_client
@@ -78,7 +81,7 @@ async def collect_rows(test_cases: list[dict]) -> list[dict]:
     return rows
 
 
-def save_results(scores: dict, timestamp: str) -> Path:
+def save_results_csv(scores: dict, timestamp: str) -> Path:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = RESULTS_DIR / f"eval_{timestamp}.csv"
 
@@ -92,7 +95,22 @@ def save_results(scores: dict, timestamp: str) -> Path:
     return out_path
 
 
-async def main() -> None:
+async def save_results_db(scores: dict, run_id: uuid.UUID, run_at: datetime) -> None:
+    async with AsyncSessionLocal() as session:
+        for metric_name, score in scores.items():
+            session.add(
+                EvalResult(
+                    run_id=run_id,
+                    metric_name=metric_name,
+                    score=float(score),
+                    run_at=run_at,
+                )
+            )
+        await session.commit()
+    logger.info("Persisted %d eval rows to Postgres for run_id=%s", len(scores), run_id)
+
+
+async def run_evaluation() -> tuple[uuid.UUID, dict, Path]:
     logger.info("Loading models...")
     load_embedder()
     load_reranker()
@@ -107,8 +125,7 @@ async def main() -> None:
     rows = await collect_rows(test_cases)
 
     if not rows:
-        logger.error("No rows collected, aborting evaluation.")
-        sys.exit(1)
+        raise RuntimeError("No rows collected, evaluation aborted.")
 
     dataset = Dataset.from_list(rows)
 
@@ -131,9 +148,23 @@ async def main() -> None:
     for metric, score in scores.items():
         logger.info("  %-25s %.4f", metric, score)
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    out_path = save_results(scores, timestamp)
-    logger.info("Evaluation complete. Results at %s", out_path)
+    run_id = uuid.uuid4()
+    run_at = datetime.now(timezone.utc)
+    timestamp = run_at.strftime("%Y%m%d_%H%M%S")
+
+    out_path = save_results_csv(scores, timestamp)
+    await save_results_db(scores, run_id, run_at)
+
+    logger.info("Evaluation complete. run_id=%s csv=%s", run_id, out_path)
+    return run_id, scores, out_path
+
+
+async def main() -> None:
+    try:
+        await run_evaluation()
+    except RuntimeError as exc:
+        logger.error(str(exc))
+        sys.exit(1)
 
 
 if __name__ == "__main__":
