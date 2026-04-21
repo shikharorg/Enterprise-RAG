@@ -90,34 +90,37 @@ def ingest_file(
 
 
 def rebuild_bm25_index(db: Session) -> None:
-    from sqlalchemy import select
-    from app.db.models import Document
-
-    all_docs = db.scalars(select(Document)).all()
     corpus_texts: list[str] = []
     doc_metadata: list[dict] = []
 
     client = QdrantClient(host=_s.qdrant_host, port=_s.qdrant_port)
 
-    for doc in all_docs:
-        results, _ = client.scroll(
+    offset = None
+    all_points = []
+    while True:
+        batch, next_offset = client.scroll(
             collection_name=_s.qdrant_collection,
             scroll_filter=None,
-            limit=10000,
+            limit=1000,
+            offset=offset,
             with_payload=True,
             with_vectors=False,
         )
-        for point in results:
-            if point.payload.get("doc_id") == str(doc.id):
-                corpus_texts.append(point.payload["text"])
-                doc_metadata.append({
-                    "id": str(point.id),
-                    "text": point.payload["text"],
-                    "doc_id": point.payload["doc_id"],
-                    "source": point.payload["source"],
-                    "role_access": point.payload["role_access"],
-                    "chunk_index": point.payload["chunk_index"],
-                })
+        all_points.extend(batch)
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    for point in all_points:
+        corpus_texts.append(point.payload["text"])
+        doc_metadata.append({
+            "id": str(point.id),
+            "text": point.payload["text"],
+            "doc_id": point.payload.get("doc_id"),
+            "source": point.payload.get("source"),
+            "role_access": point.payload.get("role_access"),
+            "chunk_index": point.payload.get("chunk_index"),
+        })
 
     save_sparse_index(corpus_texts, doc_metadata)
     logger.info("BM25 index rebuilt with %d chunks", len(corpus_texts))

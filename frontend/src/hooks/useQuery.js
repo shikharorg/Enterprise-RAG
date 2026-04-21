@@ -10,11 +10,14 @@ export function useQuery() {
     setMessages((prev) => [...prev, msg])
   }
 
-  function updateLastAssistant(patch) {
+  function updateLastAssistant(patchOrFn) {
     setMessages((prev) => {
       const next = [...prev]
       const idx = next.findLastIndex((m) => m.role === 'assistant')
-      if (idx !== -1) next[idx] = { ...next[idx], ...patch }
+      if (idx !== -1) {
+        const patch = typeof patchOrFn === 'function' ? patchOrFn(next[idx]) : patchOrFn
+        next[idx] = { ...next[idx], ...patch }
+      }
       return next
     })
   }

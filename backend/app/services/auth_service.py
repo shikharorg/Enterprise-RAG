@@ -56,7 +56,7 @@ async def rotate_refresh_token(db: AsyncSession, raw_refresh: str) -> tuple[str,
     stored = await db.scalar(
         select(RefreshToken).where(RefreshToken.token_hash == hash_token(raw_refresh))
     )
-    if not stored or stored.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if not stored or stored.expires_at < datetime.now(timezone.utc):
         raise ValueError("Refresh token invalid or expired")
 
     await db.execute(delete(RefreshToken).where(RefreshToken.id == stored.id))

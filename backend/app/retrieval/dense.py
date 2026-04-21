@@ -38,21 +38,22 @@ async def dense_search(
         ]
     )
 
-    results = await get_client().search(
+    response = await get_client().query_points(
         collection_name=_s.qdrant_collection,
-        query_vector=vector,
+        query=vector,
         query_filter=role_filter,
         limit=top_k,
         with_payload=True,
     )
 
     hits = []
-    for r in results:
+    for r in response.points:
+        payload = r.payload or {}
         hits.append({
             "id": str(r.id),
             "score": r.score,
-            "text": r.payload.get("text", ""),
-            "metadata": {k: v for k, v in r.payload.items() if k != "text"},
+            "text": payload.get("text", ""),
+            "metadata": {k: v for k, v in payload.items() if k != "text"},
         })
 
     logger.info("Dense search returned %d hits", len(hits))
