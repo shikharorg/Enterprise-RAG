@@ -15,7 +15,7 @@ from app.config import get_settings
 from app.db.models import Document, RoleEnum
 from app.ingestion.chunker import chunk_text
 from app.ingestion.loader import load_document
-from app.ingestion.metadata import build_doc_meta, strip_pii
+from app.ingestion.metadata import build_doc_meta
 from app.retrieval.embedder import embed
 from app.retrieval.sparse import save_sparse_index
 from app.utils.logger import get_logger
@@ -47,8 +47,7 @@ def ingest_file(
     logger.info("Ingesting %s as role_access=%s", file_path.name, role_access)
 
     raw_text = load_document(file_path)
-    clean_text = strip_pii(raw_text)
-    chunks = chunk_text(clean_text)
+    chunks = chunk_text(raw_text)
 
     doc_meta = build_doc_meta(file_path, role_access)
 

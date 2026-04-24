@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
       await login(email, password)
       const me = await getMe()
       setUser(me)
-      navigate('/chat', { replace: true })
+      navigate(me.role === 'admin' ? '/admin-panel' : '/chat', { replace: true })
     } catch (err) {
       setError(err.response?.data?.detail ?? 'Login failed')
     } finally {

@@ -9,7 +9,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.ingestion.metadata import load_pii_engines
 from app.ingestion.pipeline import ingest_file, rebuild_bm25_index
 from app.retrieval.embedder import load_embedder
 from app.utils.logger import get_logger
@@ -53,7 +52,6 @@ def main() -> None:
 
     logger.info("Loading models...")
     load_embedder()
-    load_pii_engines()
 
     engine = create_engine(_SYNC_DB_URL)
 

@@ -46,7 +46,7 @@ const DEPARTMENTS = [
 ];
 
 export default function LandingPage() {
-  const { setUser } = useAuth();
+  const { setUser, logout } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState(null);
@@ -55,10 +55,11 @@ export default function LandingPage() {
     setError(null);
     setLoading(dept.email);
     try {
+      await logout();
       await login(dept.email, dept.password);
       const me = await getMe();
       setUser(me);
-      navigate("/chat", { replace: true });
+      navigate("/chat");
     } catch {
       setError("Demo login failed. Make sure demo users are seeded.");
     } finally {

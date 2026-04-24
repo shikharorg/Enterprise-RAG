@@ -21,7 +21,6 @@ from ragas.metrics import (
 from app.config import get_settings
 from app.db.models import EvalResult
 from app.db.postgres import AsyncSessionLocal
-from app.ingestion.metadata import load_pii_engines
 from app.retrieval.embedder import load_embedder
 from app.retrieval.dense import load_dense_client
 from app.retrieval.sparse import load_sparse_index
@@ -116,7 +115,6 @@ async def run_evaluation() -> tuple[uuid.UUID, dict, Path]:
     load_reranker()
     load_dense_client()
     load_sparse_index()
-    load_pii_engines()
 
     from app.generation.generator import load_generator
     load_generator()

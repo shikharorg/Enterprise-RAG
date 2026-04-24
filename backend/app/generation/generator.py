@@ -62,7 +62,14 @@ def _extract_sources(chunks: list[dict]) -> list[dict]:
     return sources
 
 
+_FALLBACK = "I can only answer questions based on your department's documents."
+
+
 async def generate(query: str, chunks: list[dict]) -> dict:
+    if not chunks:
+        logger.info("No chunks retrieved for query=%r, returning fallback", query[:60])
+        return {"answer": _FALLBACK, "sources": []}
+
     messages = _build_prompt(query, chunks)
     sources = _extract_sources(chunks)
 
@@ -84,6 +91,11 @@ async def generate(query: str, chunks: list[dict]) -> dict:
 
 
 async def generate_stream(query: str, chunks: list[dict]) -> AsyncIterator[str]:
+    if not chunks:
+        logger.info("No chunks retrieved for query=%r, returning fallback", query[:60])
+        yield _FALLBACK
+        return
+
     messages = _build_prompt(query, chunks)
 
     stream = await get_client().chat.completions.create(

@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from math import exp
 
 from langsmith import traceable
 
@@ -12,6 +13,18 @@ from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+_RELEVANCE_THRESHOLD = 0.3
+
+
+def _filter_by_relevance(chunks: list[dict]) -> list[dict]:
+    def sigmoid(x: float) -> float:
+        return 1 / (1 + exp(-x))
+
+    filtered = [c for c in chunks if sigmoid(c.get("rerank_score") or 0) >= _RELEVANCE_THRESHOLD]
+    if not filtered:
+        logger.info("All rerank scores below threshold=%.1f, returning empty", _RELEVANCE_THRESHOLD)
+    return filtered
+
 
 @traceable(name="run_query", run_type="chain")
 async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
@@ -22,6 +35,7 @@ async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
             logger.info("RAG query start role=%s query=%r", role, query[:60])
             fused = await hybrid_search(query, allowed_roles, top_k=top_k * 3)
             ranked = rerank(query, fused, top_k=top_k)
+            ranked = _filter_by_relevance(ranked)
             result = await generate(query, ranked)
     except Exception:
         logger.exception("RAG query failed role=%s query=%r", role, query[:60])
@@ -42,6 +56,7 @@ async def run_query_stream(
             logger.info("RAG stream start role=%s query=%r", role, query[:60])
             fused = await hybrid_search(query, allowed_roles, top_k=top_k * 3)
             ranked = rerank(query, fused, top_k=top_k)
+            ranked = _filter_by_relevance(ranked)
     except Exception:
         logger.exception("RAG stream retrieval failed role=%s query=%r", role, query[:60])
         raise
