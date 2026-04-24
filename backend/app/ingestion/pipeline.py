@@ -88,7 +88,7 @@ def ingest_file(
     return doc_meta.doc_id
 
 
-def rebuild_bm25_index(db: Session) -> None:
+def rebuild_bm25_index(db: Session | None = None) -> None:
     corpus_texts: list[str] = []
     doc_metadata: list[dict] = []
 

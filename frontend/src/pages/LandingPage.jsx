@@ -45,6 +45,24 @@ const DEPARTMENTS = [
   },
 ];
 
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    title: "Select a role",
+    desc: "Choose your department to authenticate as that role.",
+  },
+  {
+    step: "02",
+    title: "Ask questions",
+    desc: "Query your knowledge base in plain language.",
+  },
+  {
+    step: "03",
+    title: "Get cited answers",
+    desc: "Receive answers grounded in your department's documents.",
+  },
+];
+
 export default function LandingPage() {
   const { setUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -68,8 +86,17 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-20">
+    <div className="relative min-h-screen bg-[#0a0a0a] text-white flex flex-col overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+
+      <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-20">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-xs text-white/50 tracking-wide">
@@ -116,9 +143,32 @@ export default function LandingPage() {
         </div>
 
         {error && <p className="mt-6 text-sm text-red-400">{error}</p>}
+
+        <div className="mt-24 w-full max-w-4xl">
+          <p className="text-center text-[10px] font-semibold uppercase tracking-widest text-white/20 mb-10">
+            How it works
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {HOW_IT_WORKS.map(({ step, title, desc }) => (
+              <div key={step} className="flex flex-col items-center text-center">
+                <span className="text-xs font-mono text-white/20 mb-2">{step}</span>
+                <div className="h-px w-8 bg-white/10 mb-3" />
+                <h3 className="text-sm font-medium text-white/60">{title}</h3>
+                <p className="mt-1.5 text-xs text-white/25 leading-relaxed max-w-[180px]">
+                  {desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <footer className="pb-6 text-center">
+      <footer className="relative pb-6 flex flex-col items-center gap-3">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1">
+          <span className="text-[10px] text-white/20">
+            Built with FastAPI · Qdrant · GPT-4o-mini
+          </span>
+        </div>
         <Link
           to="/admin"
           className="text-[11px] text-white/10 hover:text-white/25 transition-colors"

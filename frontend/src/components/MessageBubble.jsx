@@ -1,17 +1,33 @@
-export default function MessageBubble({ role, content }) {
+import SourceCard from './SourceCard'
+
+const DEPT_BG = {
+  hr: '#7c3aed',
+  engineering: '#0284c7',
+  finance: '#059669',
+}
+
+export default function MessageBubble({ role, content, userRole, sources }) {
   const isUser = role === 'user'
+  const userBg = DEPT_BG[userRole] ?? '#374151'
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
       <div
-        className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${
-          isUser
-            ? 'bg-brand-500 text-white rounded-tr-sm'
-            : 'bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100'
-        }`}
+        className="max-w-[78%] px-3.5 py-2.5 text-sm whitespace-pre-wrap leading-relaxed"
+        style={{
+          borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+          ...(isUser
+            ? { background: userBg, color: '#fff' }
+            : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.08)' })
+        }}
       >
         {content}
       </div>
+      {!isUser && sources && sources.length > 0 && (
+        <div className="flex gap-1.5 flex-wrap max-w-[78%]">
+          {sources.map((s, i) => <SourceCard key={i} source={s} />)}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,15 +1,34 @@
+const DEPT = {
+  hr:          { bg: 'rgba(139,92,246,0.10)', text: '#a78bfa', border: 'rgba(139,92,246,0.20)' },
+  engineering: { bg: 'rgba(14,165,233,0.10)',  text: '#38bdf8', border: 'rgba(14,165,233,0.20)' },
+  finance:     { bg: 'rgba(16,185,129,0.10)',  text: '#34d399', border: 'rgba(16,185,129,0.20)' },
+}
+
 export default function SourceCard({ source }) {
   const pct = source.rerank_score != null
     ? Math.round((1 / (1 + Math.exp(-source.rerank_score))) * 100)
     : null
+  const d = DEPT[source.department]
 
   return (
-    <div className="flex flex-col gap-0.5 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs shadow-sm min-w-[140px] max-w-[200px]">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium text-gray-700 truncate">[{source.index}] {source.source}</span>
-        {pct != null && <span className="text-gray-400 shrink-0">{pct}%</span>}
-      </div>
-      <span className="text-gray-400 capitalize">{source.department}</span>
+    <div
+      className="inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1"
+      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 9999 }}
+    >
+      {d && (
+        <span
+          className="text-[10px] font-medium px-1.5 py-px"
+          style={{ background: d.bg, color: d.text, border: `1px solid ${d.border}`, borderRadius: 9999 }}
+        >
+          {source.department}
+        </span>
+      )}
+      <span className="text-[11px] font-medium truncate max-w-[120px]" style={{ color: 'rgba(255,255,255,0.65)' }}>
+        {source.source}
+      </span>
+      {pct != null && (
+        <span className="text-[11px] tabular-nums" style={{ color: 'rgba(255,255,255,0.30)' }}>{pct}%</span>
+      )}
     </div>
   )
 }

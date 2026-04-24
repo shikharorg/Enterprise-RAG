@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import admin, auth, health, ingest, query
+from app.api.routes import admin, auth, documents, health, ingest, query
 from app.config import configure_langsmith, get_settings
 from app.db.postgres import close_db, init_db
 from app.generation.generator import load_generator
@@ -55,3 +55,4 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(query.router, prefix="/api/v1")
 app.include_router(ingest.router, prefix="/api/v1")
+app.include_router(documents.router, prefix="/api/v1")

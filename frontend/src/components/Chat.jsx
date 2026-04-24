@@ -1,7 +1,14 @@
 import { useState } from 'react'
 
-export default function Chat({ onSend, disabled }) {
+const DEPT_BTN = {
+  hr: '#7c3aed',
+  engineering: '#0284c7',
+  finance: '#059669',
+}
+
+export default function Chat({ onSend, disabled, userRole }) {
   const [input, setInput] = useState('')
+  const btnColor = DEPT_BTN[userRole] ?? '#374151'
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -18,21 +25,31 @@ export default function Chat({ onSend, disabled }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-end gap-2.5 rounded-[14px] px-3.5 py-2.5"
+      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
+    >
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Ask a question…"
+        placeholder="Ask a question about your department's documents…"
         rows={1}
         disabled={disabled}
-        className="flex-1 resize-none text-sm text-gray-800 placeholder-gray-400 focus:outline-none disabled:opacity-50 max-h-40 overflow-y-auto"
-        style={{ lineHeight: '1.5rem' }}
+        className="flex-1 resize-none text-sm focus:outline-none disabled:opacity-50 max-h-32 overflow-y-auto placeholder:text-white/25"
+        style={{
+          lineHeight: '1.5rem',
+          background: 'transparent',
+          color: 'rgba(255,255,255,0.85)',
+          fontFamily: 'inherit',
+        }}
       />
       <button
         type="submit"
         disabled={disabled || !input.trim()}
-        className="shrink-0 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white rounded-xl px-4 py-1.5 text-sm font-medium transition-colors"
+        className="shrink-0 text-white text-xs font-medium rounded-[10px] px-4 py-1.5 transition-opacity disabled:opacity-30"
+        style={{ background: btnColor }}
       >
         Send
       </button>

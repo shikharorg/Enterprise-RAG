@@ -4,7 +4,6 @@ import api from '../services/api'
 export function useQuery() {
   const [messages, setMessages] = useState([])
   const [thinking, setThinking] = useState(false)
-  const [sources, setSources] = useState([])
 
   function appendMessage(msg) {
     setMessages((prev) => [...prev, msg])
@@ -25,20 +24,18 @@ export function useQuery() {
   async function sendQuery(query, stream = true) {
     appendMessage({ role: 'user', content: query })
     setThinking(true)
-    setSources([])
 
     if (!stream) {
       try {
         const res = await api.post('/query', { query, stream: false })
-        appendMessage({ role: 'assistant', content: res.data.answer })
-        setSources(res.data.sources)
+        appendMessage({ role: 'assistant', content: res.data.answer, sources: res.data.sources ?? [] })
       } finally {
         setThinking(false)
       }
       return
     }
 
-    appendMessage({ role: 'assistant', content: '' })
+    appendMessage({ role: 'assistant', content: '', sources: [] })
 
     try {
       const res = await fetch('/api/v1/query', {
@@ -73,7 +70,7 @@ export function useQuery() {
             updateLastAssistant((prev) => ({ content: (prev.content ?? '') + payload.token }))
           }
           if (payload.done) {
-            setSources(payload.sources ?? [])
+            updateLastAssistant({ sources: payload.sources ?? [] })
           }
         }
       }
@@ -82,5 +79,5 @@ export function useQuery() {
     }
   }
 
-  return { messages, thinking, sources, sendQuery }
+  return { messages, thinking, sendQuery }
 }

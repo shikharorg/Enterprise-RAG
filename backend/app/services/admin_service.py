@@ -2,12 +2,17 @@ import asyncio
 import uuid
 from datetime import datetime, timezone
 
+from qdrant_client.models import FieldCondition, Filter, MatchValue
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.db.models import Document, EvalResult, RoleEnum, User
+from app.retrieval.dense import get_client as get_qdrant_client
 from app.state import rag_slots_in_use
 from app.utils.logger import get_logger
+
+_s = get_settings()
 
 logger = get_logger(__name__)
 
@@ -41,8 +46,25 @@ async def delete_document(db: AsyncSession, document_id: uuid.UUID) -> None:
     doc = await db.get(Document, document_id)
     if not doc:
         raise ValueError(f"Document not found: {document_id}")
+
+    doc_id_str = str(document_id)
+
+    logger.info("Deleting Qdrant chunks for doc_id=%s collection=%s", doc_id_str, _s.qdrant_collection)
+    result = await get_qdrant_client().delete(
+        collection_name=_s.qdrant_collection,
+        points_selector=Filter(
+            must=[FieldCondition(key="doc_id", match=MatchValue(value=doc_id_str))]
+        ),
+    )
+    logger.info("Qdrant delete result for doc_id=%s: %s", doc_id_str, result)
+
+    from app.ingestion.pipeline import rebuild_bm25_index
+    logger.info("Rebuilding BM25 index after deletion of doc_id=%s", doc_id_str)
+    await asyncio.to_thread(rebuild_bm25_index, None)
+    logger.info("BM25 index rebuilt after deletion of doc_id=%s", doc_id_str)
+
     await db.delete(doc)
-    logger.info("Deleted document %s", document_id)
+    logger.info("Deleted Postgres document row for doc_id=%s", doc_id_str)
 
 
 async def list_users(
