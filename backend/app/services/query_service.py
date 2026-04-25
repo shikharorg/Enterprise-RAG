@@ -1,5 +1,5 @@
+import re
 from collections.abc import AsyncIterator
-from math import exp
 
 from langsmith import traceable
 
@@ -13,29 +13,52 @@ from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_RELEVANCE_THRESHOLD = 0.3
+_FILLER_RE = re.compile(
+    r"^(?:"
+    r"tell me about|"
+    r"what (?:is|are) the|"
+    r"can you explain|"
+    r"i want to know about|"
+    r"explain to me|"
+    r"describe|"
+    r"give me information about|"
+    r"how does|"
+    r"what does"
+    r")\s+",
+    re.IGNORECASE,
+)
 
 
-def _filter_by_relevance(chunks: list[dict]) -> list[dict]:
-    def sigmoid(x: float) -> float:
-        return 1 / (1 + exp(-x))
+def _normalize_rerank_scores(chunks: list[dict]) -> list[dict]:
+    if not chunks:
+        return chunks
+    scores = [c.get("rerank_score") or 0.0 for c in chunks]
+    min_s, max_s = min(scores), max(scores)
+    spread = max_s - min_s
+    for chunk, raw in zip(chunks, scores):
+        chunk["rerank_score"] = round((raw - min_s) / spread * 100, 1) if spread > 0 else 100.0
+    return chunks
 
-    filtered = [c for c in chunks if sigmoid(c.get("rerank_score") or 0) >= _RELEVANCE_THRESHOLD]
-    if not filtered:
-        logger.info("All rerank scores below threshold=%.1f, returning empty", _RELEVANCE_THRESHOLD)
-    return filtered
+
+def _preprocess_query(query: str) -> str:
+    stripped = _FILLER_RE.sub("", query).strip()
+    if stripped != query:
+        logger.info("Query preprocessed: %r -> %r", query[:60], stripped[:60])
+    else:
+        logger.debug("Query unchanged by preprocessing: %r", query[:60])
+    return stripped
 
 
 @traceable(name="run_query", run_type="chain")
 async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
     allowed_roles = get_allowed_collections(role)
+    retrieval_query = _preprocess_query(query)
 
     try:
         async with _state.rag_semaphore:
-            logger.info("RAG query start role=%s query=%r", role, query[:60])
-            fused = await hybrid_search(query, allowed_roles, top_k=top_k * 3)
-            ranked = rerank(query, fused, top_k=top_k)
-            ranked = _filter_by_relevance(ranked)
+            logger.info("RAG query start role=%s query=%r retrieval_query=%r", role, query[:60], retrieval_query[:60])
+            fused = await hybrid_search(retrieval_query, allowed_roles, top_k=top_k * 3)
+            ranked = _normalize_rerank_scores(rerank(retrieval_query, fused, top_k=top_k))
             result = await generate(query, ranked)
     except Exception:
         logger.exception("RAG query failed role=%s query=%r", role, query[:60])
@@ -50,13 +73,13 @@ async def run_query_stream(
     query: str, role: RoleEnum, top_k: int
 ) -> tuple[AsyncIterator[str], list[dict]]:
     allowed_roles = get_allowed_collections(role)
+    retrieval_query = _preprocess_query(query)
 
     try:
         async with _state.rag_semaphore:
-            logger.info("RAG stream start role=%s query=%r", role, query[:60])
-            fused = await hybrid_search(query, allowed_roles, top_k=top_k * 3)
-            ranked = rerank(query, fused, top_k=top_k)
-            ranked = _filter_by_relevance(ranked)
+            logger.info("RAG stream start role=%s query=%r retrieval_query=%r", role, query[:60], retrieval_query[:60])
+            fused = await hybrid_search(retrieval_query, allowed_roles, top_k=top_k * 3)
+            ranked = _normalize_rerank_scores(rerank(retrieval_query, fused, top_k=top_k))
     except Exception:
         logger.exception("RAG stream retrieval failed role=%s query=%r", role, query[:60])
         raise

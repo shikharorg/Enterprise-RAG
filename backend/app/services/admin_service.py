@@ -2,7 +2,7 @@ import asyncio
 import uuid
 from datetime import datetime, timezone
 
-from qdrant_client.models import FieldCondition, Filter, MatchValue
+from qdrant_client.models import FieldCondition, Filter, FilterSelector, MatchValue
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,29 +42,102 @@ async def list_documents(
     return docs, total
 
 
+async def _rebuild_bm25() -> None:
+    from app.retrieval.sparse import save_sparse_index
+
+    corpus_texts: list[str] = []
+    doc_metadata: list[dict] = []
+    offset = None
+
+    logger.info("BM25 rebuild: scrolling Qdrant for remaining chunks")
+    while True:
+        batch, next_offset = await get_qdrant_client().scroll(
+            collection_name=_s.qdrant_collection,
+            scroll_filter=None,
+            limit=1000,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for point in batch:
+            corpus_texts.append(point.payload.get("text", ""))
+            doc_metadata.append({
+                "id": str(point.id),
+                "text": point.payload.get("text", ""),
+                "doc_id": point.payload.get("doc_id"),
+                "source": point.payload.get("source"),
+                "role_access": point.payload.get("role_access"),
+                "chunk_index": point.payload.get("chunk_index"),
+            })
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    if not corpus_texts:
+        logger.info("BM25 rebuild: no chunks remain — clearing index")
+        from app.retrieval.sparse import clear_sparse_index
+        await asyncio.to_thread(clear_sparse_index)
+        return
+
+    unique_doc_ids = {m["doc_id"] for m in doc_metadata}
+    unique_sources = {m["source"] for m in doc_metadata}
+    logger.info(
+        "BM25 rebuild: fetched %d chunks across %d doc_ids, sources=%s",
+        len(corpus_texts),
+        len(unique_doc_ids),
+        sorted(unique_sources),
+    )
+
+    logger.info("BM25 rebuild: writing index to disk")
+    await asyncio.to_thread(save_sparse_index, corpus_texts, doc_metadata)
+    logger.info("BM25 rebuild: saved — reloading in-memory index from disk")
+
+    from app.retrieval.sparse import reload_sparse_index
+    await asyncio.to_thread(reload_sparse_index)
+    logger.info(
+        "BM25 rebuild: complete — %d chunks, %d unique documents in new index",
+        len(corpus_texts),
+        len(unique_doc_ids),
+    )
+
+
 async def delete_document(db: AsyncSession, document_id: uuid.UUID) -> None:
+    logger.info("delete_document called for document_id=%s", document_id)
+
     doc = await db.get(Document, document_id)
+    logger.info("db.get result for document_id=%s: %s", document_id, doc)
     if not doc:
         raise ValueError(f"Document not found: {document_id}")
 
     doc_id_str = str(document_id)
-
-    logger.info("Deleting Qdrant chunks for doc_id=%s collection=%s", doc_id_str, _s.qdrant_collection)
-    result = await get_qdrant_client().delete(
-        collection_name=_s.qdrant_collection,
-        points_selector=Filter(
-            must=[FieldCondition(key="doc_id", match=MatchValue(value=doc_id_str))]
-        ),
+    doc_filter = Filter(
+        must=[FieldCondition(key="doc_id", match=MatchValue(value=doc_id_str))]
     )
-    logger.info("Qdrant delete result for doc_id=%s: %s", doc_id_str, result)
 
-    from app.ingestion.pipeline import rebuild_bm25_index
-    logger.info("Rebuilding BM25 index after deletion of doc_id=%s", doc_id_str)
-    await asyncio.to_thread(rebuild_bm25_index, None)
-    logger.info("BM25 index rebuilt after deletion of doc_id=%s", doc_id_str)
+    logger.info("Deleting Qdrant chunks for doc_id=%s", doc_id_str)
+    await get_qdrant_client().delete(
+        collection_name=_s.qdrant_collection,
+        points_selector=FilterSelector(filter=doc_filter),
+    )
 
+    remaining = await get_qdrant_client().count(
+        collection_name=_s.qdrant_collection,
+        count_filter=doc_filter,
+        exact=True,
+    )
+    logger.info(
+        "Qdrant delete complete for doc_id=%s — chunks remaining: %d",
+        doc_id_str,
+        remaining.count,
+    )
+
+    logger.info("Deleting Postgres row for doc_id=%s", doc_id_str)
     await db.delete(doc)
-    logger.info("Deleted Postgres document row for doc_id=%s", doc_id_str)
+    await db.commit()
+    logger.info("Postgres commit complete for doc_id=%s", doc_id_str)
+
+    logger.info("Rebuilding BM25 index after deletion of doc_id=%s", doc_id_str)
+    await _rebuild_bm25()
 
 
 async def list_users(

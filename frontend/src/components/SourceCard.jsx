@@ -5,9 +5,7 @@ const DEPT = {
 }
 
 export default function SourceCard({ source }) {
-  const pct = source.rerank_score != null
-    ? Math.round((1 / (1 + Math.exp(-source.rerank_score))) * 100)
-    : null
+  const pct = source.rerank_score != null ? Math.round(source.rerank_score) : null
   const d = DEPT[source.department]
 
   return (

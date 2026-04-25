@@ -25,7 +25,14 @@ export default function MessageBubble({ role, content, userRole, sources }) {
       </div>
       {!isUser && sources && sources.length > 0 && (
         <div className="flex gap-1.5 flex-wrap max-w-[78%]">
-          {sources.map((s, i) => <SourceCard key={i} source={s} />)}
+          {Object.values(
+            sources.reduce((acc, s) => {
+              const key = s.source
+              if (!acc[key] || (s.rerank_score ?? -Infinity) > (acc[key].rerank_score ?? -Infinity))
+                acc[key] = s
+              return acc
+            }, {})
+          ).map((s) => <SourceCard key={s.source} source={s} />)}
         </div>
       )}
     </div>

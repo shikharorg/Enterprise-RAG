@@ -98,6 +98,7 @@ export default function AdminPage() {
   const [docsLoading, setDocsLoading] = useState(false)
   const [docsError, setDocsError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
   const [uploadFile, setUploadFile] = useState(null)
   const [uploadDept, setUploadDept] = useState('hr')
   const [uploading, setUploading] = useState(false)
@@ -137,11 +138,12 @@ export default function AdminPage() {
 
   async function deleteDoc(id) {
     setDeletingId(id)
+    setDeleteError(null)
     try {
       await api.delete(`/admin/documents/${id}`)
       setDocs((prev) => prev.filter((d) => d.id !== id))
-    } catch {
-      // leave doc in list on error
+    } catch (err) {
+      setDeleteError(err.response?.data?.detail ?? 'Delete failed.')
     } finally {
       setDeletingId(null)
     }
@@ -293,6 +295,7 @@ export default function AdminPage() {
               </form>
               {uploadError && <p className="mt-3 text-xs text-rose-400">{uploadError}</p>}
               {uploadSuccess && <p className="mt-3 text-xs text-emerald-400">Document ingested successfully.</p>}
+              {deleteError && <p className="mt-3 text-xs text-rose-400">Delete failed: {deleteError}</p>}
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">

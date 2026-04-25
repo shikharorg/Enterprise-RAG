@@ -43,13 +43,15 @@ def ingest_file(
     role_access: str,
     db: Session,
     uploader_id: str | None = None,
+    original_filename: str | None = None,
 ) -> str:
-    logger.info("Ingesting %s as role_access=%s", file_path.name, role_access)
+    display_name = original_filename or file_path.name
+    logger.info("Ingesting %s as role_access=%s", display_name, role_access)
 
     raw_text = load_document(file_path)
     chunks = chunk_text(raw_text)
 
-    doc_meta = build_doc_meta(file_path, role_access)
+    doc_meta = build_doc_meta(file_path, role_access, original_filename=original_filename)
 
     client = QdrantClient(host=_s.qdrant_host, port=_s.qdrant_port)
     texts = [c.text for c in chunks]
@@ -76,7 +78,7 @@ def ingest_file(
 
     doc_record = Document(
         id=uuid.UUID(doc_meta.doc_id),
-        name=file_path.name,
+        name=display_name,
         department=RoleEnum(role_access),
         chunk_count=len(chunks),
         uploaded_by=uuid.UUID(uploader_id) if uploader_id else None,

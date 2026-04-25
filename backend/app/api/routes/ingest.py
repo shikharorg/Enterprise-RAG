@@ -54,6 +54,7 @@ async def ingest_document(
             file_path=temp_path,
             role_access=role_access,
             uploader_id=str(current_user.id),
+            original_filename=file.filename,
         )
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))

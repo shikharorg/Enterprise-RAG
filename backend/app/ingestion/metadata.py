@@ -10,9 +10,9 @@ class DocumentMeta:
     role_access: str
 
 
-def build_doc_meta(file_path: Path, role_access: str) -> DocumentMeta:
+def build_doc_meta(file_path: Path, role_access: str, original_filename: str | None = None) -> DocumentMeta:
     return DocumentMeta(
         doc_id=str(uuid.uuid4()),
-        source=file_path.name,
+        source=original_filename or file_path.name,
         role_access=role_access,
     )

@@ -38,7 +38,9 @@ def _build_prompt(query: str, chunks: list[dict]) -> list[dict]:
                 "You are a helpful enterprise knowledge assistant. "
                 "Answer the user's question using only the context provided. "
                 "Cite sources by their bracketed number, e.g. [1]. "
-                "If the context does not contain enough information, say so clearly."
+                "If the retrieved context is not relevant to the question, "
+                "respond with exactly: "
+                "\"I can only answer questions based on your department's documents.\""
             ),
         },
         {

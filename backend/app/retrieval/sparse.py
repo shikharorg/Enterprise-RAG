@@ -25,6 +25,30 @@ def load_sparse_index() -> None:
     logger.info("BM25 index loaded with %d documents", len(_doc_store))
 
 
+def clear_sparse_index() -> None:
+    global _retriever, _doc_store
+    _retriever = None
+    _doc_store = None
+    if _INDEX_PATH.exists():
+        for f in _INDEX_PATH.iterdir():
+            f.unlink(missing_ok=True)
+        logger.info("BM25 index files cleared from %s", _INDEX_PATH)
+    logger.info("BM25 in-memory index cleared")
+
+
+def reload_sparse_index() -> None:
+    global _retriever, _doc_store
+    if not _INDEX_PATH.exists():
+        logger.warning("reload_sparse_index: index path %s not found, clearing in-memory index", _INDEX_PATH)
+        _retriever = None
+        _doc_store = None
+        return
+    _retriever = bm25s.BM25.load(str(_INDEX_PATH), load_corpus=False)
+    with open(_INDEX_PATH / "doc_store.json") as f:
+        _doc_store = json.load(f)
+    logger.info("BM25 index reloaded from disk with %d documents", len(_doc_store))
+
+
 def save_sparse_index(corpus_texts: list[str], doc_metadata: list[dict]) -> None:
     _INDEX_PATH.mkdir(parents=True, exist_ok=True)
     retriever = bm25s.BM25()

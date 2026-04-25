@@ -23,8 +23,10 @@ from app.services.admin_service import (
     set_user_active,
     trigger_eval_run,
 )
+from app.utils.logger import get_logger
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+logger = get_logger(__name__)
 
 
 def _require_admin(current_user: User = Depends(get_current_user)) -> User:
@@ -54,10 +56,19 @@ async def remove_document(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(_require_admin),
 ):
+    logger.info("DELETE /admin/documents/%s — handler entered", document_id)
     try:
         await delete_document(db, document_id)
+        logger.info("DELETE /admin/documents/%s — completed successfully", document_id)
     except ValueError as exc:
+        logger.warning("DELETE /admin/documents/%s — not found: %s", document_id, exc)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except Exception:
+        logger.exception("DELETE /admin/documents/%s — unexpected error", document_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete document",
+        )
 
 
 @router.get("/users", response_model=list[UserAdminResponse])
