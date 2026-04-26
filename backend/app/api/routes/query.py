@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from app.api.dependencies import get_current_user
 from app.db.models import User
 from app.schemas.query import QueryRequest, QueryResponse
-from app.services.query_service import run_query, run_query_stream
+from app.services.query_service import run_query, run_query_stream, _CITATION_RE
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -33,8 +33,11 @@ async def query(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
     async def event_stream():
+        tokens = []
         async for token in stream:
+            tokens.append(token)
             yield f"data: {json.dumps({'token': token})}\n\n"
-        yield f"data: {json.dumps({'sources': sources, 'done': True})}\n\n"
+        final_sources = sources if _CITATION_RE.search("".join(tokens)) else []
+        yield f"data: {json.dumps({'sources': final_sources, 'done': True})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

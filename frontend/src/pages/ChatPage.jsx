@@ -36,8 +36,11 @@ export default function ChatPage() {
   const suggestions = SUGGESTIONS[user?.role] ?? []
 
   useEffect(() => {
-    if (messagesRef.current) {
-      messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+    const el = messagesRef.current
+    if (!el) return
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 180
+    if (nearBottom) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
     }
   }, [messages, thinking])
 
@@ -134,12 +137,14 @@ export default function ChatPage() {
             ) : (
               <>
                 {messages.map((msg, i) => (
+                  msg.role === 'assistant' && !msg.content ? null :
                   <MessageBubble
                     key={i}
                     role={msg.role}
                     content={msg.content}
                     userRole={user?.role}
                     sources={msg.sources}
+                    streaming={msg.streaming}
                   />
                 ))}
                 {thinking && <ThinkingIndicator />}

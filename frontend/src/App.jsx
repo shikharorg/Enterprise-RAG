@@ -20,10 +20,22 @@ function RequireAdmin({ children }) {
   return children
 }
 
+function RequireDemoAdmin({ children }) {
+  const { user } = useAuth()
+  if (user === undefined) return null
+  if (user === null) return <Navigate to="/" replace />
+  if (user.role !== 'demo_admin') return <Navigate to="/chat" replace />
+  return children
+}
+
 function RequireGuest({ children }) {
   const { user } = useAuth()
   if (user === undefined) return null
-  if (user) return <Navigate to={user.role === 'admin' ? '/admin-panel' : '/chat'} replace />
+  if (user) {
+    if (user.role === 'admin') return <Navigate to="/admin-panel" replace />
+    if (user.role === 'demo_admin') return <Navigate to="/demo-admin" replace />
+    return <Navigate to="/chat" replace />
+  }
   return children
 }
 
@@ -35,6 +47,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/admin" element={<RequireGuest><AdminLoginPage /></RequireGuest>} />
           <Route path="/admin-panel" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
+          <Route path="/demo-admin" element={<RequireDemoAdmin><AdminPage /></RequireDemoAdmin>} />
           <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

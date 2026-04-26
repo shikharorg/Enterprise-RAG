@@ -12,6 +12,7 @@ class RoleEnum(str, enum.Enum):
     engineering = "engineering"
     finance = "finance"
     admin = "admin"
+    demo_admin = "demo_admin"
 
 
 class Base(DeclarativeBase):

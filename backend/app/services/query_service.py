@@ -13,6 +13,10 @@ from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+REFUSAL_TEXT = "I can only answer questions based on your department's documents"
+
+_CITATION_RE = re.compile(r"\[\d+\]")
+
 _FILLER_RE = re.compile(
     r"^(?:"
     r"tell me about|"
@@ -27,6 +31,16 @@ _FILLER_RE = re.compile(
     r")\s+",
     re.IGNORECASE,
 )
+
+_GREETING_RE = re.compile(
+    r"^\s*(hi|hello|hey|good\s+morning|good\s+afternoon|good\s+evening|"
+    r"how\s+are\s+you|howdy|greetings|sup|what'?s\s+up)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_greeting(query: str) -> bool:
+    return bool(_GREETING_RE.match(query.strip()))
 
 
 def _normalize_rerank_scores(chunks: list[dict]) -> list[dict]:
@@ -51,6 +65,12 @@ def _preprocess_query(query: str) -> str:
 
 @traceable(name="run_query", run_type="chain")
 async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
+    if _is_greeting(query):
+        logger.info("Greeting detected, skipping retrieval query=%r", query[:60])
+        result = await generate(query, [])
+        result["sources"] = []
+        return result
+
     allowed_roles = get_allowed_collections(role)
     retrieval_query = _preprocess_query(query)
 
@@ -64,6 +84,10 @@ async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
         logger.exception("RAG query failed role=%s query=%r", role, query[:60])
         raise
 
+    if not _CITATION_RE.search(result["answer"]):
+        result["sources"] = []
+        logger.info("No citations in answer, clearing sources query=%r", query[:60])
+
     logger.info("RAG query complete role=%s sources=%d", role, len(result["sources"]))
     return result
 
@@ -72,6 +96,10 @@ async def run_query(query: str, role: RoleEnum, top_k: int) -> dict:
 async def run_query_stream(
     query: str, role: RoleEnum, top_k: int
 ) -> tuple[AsyncIterator[str], list[dict]]:
+    if _is_greeting(query):
+        logger.info("Greeting detected, skipping retrieval query=%r", query[:60])
+        return generate_stream(query, []), []
+
     allowed_roles = get_allowed_collections(role)
     retrieval_query = _preprocess_query(query)
 

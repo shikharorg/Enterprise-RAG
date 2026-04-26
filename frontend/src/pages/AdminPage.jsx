@@ -43,6 +43,38 @@ function ScoreBar({ score }) {
   )
 }
 
+function Tooltip({ text, children }) {
+  const [vis, setVis] = useState(false)
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline-flex' }}
+      onMouseEnter={() => setVis(true)}
+      onMouseLeave={() => setVis(false)}
+    >
+      {children}
+      {vis && (
+        <span style={{
+          position: 'absolute',
+          bottom: 'calc(100% + 6px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          padding: '4px 8px',
+          background: '#1a1a1a',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 6,
+          fontSize: '0.68rem',
+          color: 'rgba(255,255,255,0.65)',
+          whiteSpace: 'nowrap',
+          zIndex: 50,
+          pointerEvents: 'none',
+        }}>
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-16">
@@ -65,7 +97,9 @@ function latestRunScores(results) {
   for (const r of results) {
     if (!runs[r.run_id]) runs[r.run_id] = { runAt: r.run_at, scores: {} }
     if (r.run_at > runs[r.run_id].runAt) runs[r.run_id].runAt = r.run_at
-    runs[r.run_id].scores[r.metric_name] = r.score
+    if (r.score != null && !Number.isNaN(r.score)) {
+      runs[r.run_id].scores[r.metric_name] = r.score
+    }
   }
   let latestId = null, latestAt = ''
   for (const [id, run] of Object.entries(runs)) {
@@ -92,6 +126,7 @@ const TABS = [
 
 export default function AdminPage() {
   const { user, logout } = useAuth()
+  const isDemoAdmin = user?.role === 'demo_admin'
   const [tab, setTab] = useState('documents')
 
   const [docs, setDocs] = useState(null)
@@ -115,13 +150,35 @@ export default function AdminPage() {
   const [evalLoading, setEvalLoading] = useState(false)
   const [evalError, setEvalError] = useState(null)
   const [runningEval, setRunningEval] = useState(false)
-  const [evalStarted, setEvalStarted] = useState(false)
+  const [evalPolling, setEvalPolling] = useState(false)
+  const [evalBaselineAt, setEvalBaselineAt] = useState(null)
 
   useEffect(() => {
     if (tab === 'documents' && docs === null) fetchDocs()
     if (tab === 'users' && users === null) fetchUsers()
     if (tab === 'eval' && evalResults === null) fetchEval()
   }, [tab])
+
+  useEffect(() => {
+    if (!evalPolling) return
+    const id = setInterval(async () => {
+      try {
+        const res = await api.get('/admin/eval/results')
+        const rows = res.data
+        if (rows && rows.length > 0) {
+          const latestAt = rows.reduce((max, r) => (r.run_at > max ? r.run_at : max), '')
+          if (!evalBaselineAt || latestAt > evalBaselineAt) {
+            setEvalResults(rows)
+            setEvalPolling(false)
+            clearInterval(id)
+          }
+        }
+      } catch {
+        // keep polling
+      }
+    }, 5000)
+    return () => clearInterval(id)
+  }, [evalPolling, evalBaselineAt])
 
   async function fetchDocs() {
     setDocsLoading(true)
@@ -213,10 +270,11 @@ export default function AdminPage() {
   async function triggerEval() {
     setRunningEval(true)
     setEvalError(null)
-    setEvalStarted(false)
+    const { runAt: currentLatest } = latestRunScores(evalResults)
     try {
       await api.post('/admin/eval/run')
-      setEvalStarted(true)
+      setEvalBaselineAt(currentLatest)
+      setEvalPolling(true)
     } catch (err) {
       setEvalError(err.response?.data?.detail ?? 'Failed to start eval run.')
     } finally {
@@ -267,7 +325,10 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
               <h2 className="text-sm font-semibold text-white mb-4">Upload Document</h2>
               <form onSubmit={handleUpload} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                <div className="flex-1">
+                <div
+                  className="flex-1 flex gap-3 items-center"
+                  style={isDemoAdmin ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
+                >
                   <input
                     ref={fileRef}
                     type="file"
@@ -275,23 +336,35 @@ export default function AdminPage() {
                     onChange={(e) => { setUploadFile(e.target.files[0] ?? null); setUploadSuccess(false) }}
                     className="block w-full text-sm text-white/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-white/10 file:bg-white/5 file:text-white/70 file:text-xs file:cursor-pointer hover:file:bg-white/10 file:transition-colors"
                   />
+                  <select
+                    value={uploadDept}
+                    onChange={(e) => setUploadDept(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 focus:outline-none focus:border-white/30"
+                  >
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d} className="bg-[#111]">{d}</option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  value={uploadDept}
-                  onChange={(e) => setUploadDept(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 focus:outline-none focus:border-white/30"
-                >
-                  {DEPARTMENTS.map((d) => (
-                    <option key={d} value={d} className="bg-[#111]">{d}</option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  disabled={uploading || !uploadFile}
-                  className="px-4 py-1.5 rounded-lg bg-white text-black text-sm font-medium disabled:opacity-30 hover:bg-white/90 transition-colors whitespace-nowrap"
-                >
-                  {uploading ? 'Uploading…' : 'Upload'}
-                </button>
+                {isDemoAdmin ? (
+                  <Tooltip text="Demo accounts have read-only access">
+                    <button
+                      type="button"
+                      disabled
+                      className="px-4 py-1.5 rounded-lg bg-white text-black text-sm font-medium disabled:opacity-30 whitespace-nowrap cursor-not-allowed"
+                    >
+                      Upload
+                    </button>
+                  </Tooltip>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={uploading || !uploadFile}
+                    className="px-4 py-1.5 rounded-lg bg-white text-black text-sm font-medium disabled:opacity-30 hover:bg-white/90 transition-colors whitespace-nowrap"
+                  >
+                    {uploading ? 'Uploading…' : 'Upload'}
+                  </button>
+                )}
               </form>
               {uploadError && <p className="mt-3 text-xs text-rose-400">{uploadError}</p>}
               {uploadSuccess && <p className="mt-3 text-xs text-emerald-400">Document ingested successfully.</p>}
@@ -331,14 +404,25 @@ export default function AdminPage() {
                             <td className="px-6 py-3.5"><DeptBadge dept={doc.department} /></td>
                             <td className="px-6 py-3.5 text-white/50">{doc.chunk_count}</td>
                             <td className="px-6 py-3.5 text-white/40 text-xs whitespace-nowrap">{fmtDate(doc.uploaded_at)}</td>
-                            <td className="px-6 py-3.5 text-right">
-                              <button
-                                onClick={() => deleteDoc(doc.id)}
-                                disabled={deletingId === doc.id}
-                                className="text-xs text-rose-400/60 hover:text-rose-400 disabled:opacity-30 transition-colors"
-                              >
-                                {deletingId === doc.id ? 'Deleting…' : 'Delete'}
-                              </button>
+                            <td className="px-6 py-3.5 text-right" style={{ overflow: 'visible' }}>
+                              {isDemoAdmin ? (
+                                <Tooltip text="Demo accounts have read-only access">
+                                  <button
+                                    disabled
+                                    className="text-xs text-rose-400/30 disabled:opacity-30 cursor-not-allowed"
+                                  >
+                                    Delete
+                                  </button>
+                                </Tooltip>
+                              ) : (
+                                <button
+                                  onClick={() => deleteDoc(doc.id)}
+                                  disabled={deletingId === doc.id}
+                                  className="text-xs text-rose-400/60 hover:text-rose-400 disabled:opacity-30 transition-colors"
+                                >
+                                  {deletingId === doc.id ? 'Deleting…' : 'Delete'}
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -378,29 +462,51 @@ export default function AdminPage() {
                     {!users || users.length === 0 ? (
                       <EmptyRow cols={4} message="No users found." />
                     ) : (
-                      users.map((u) => (
-                        <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="px-6 py-3.5 text-white/80 text-xs">{u.email}</td>
-                          <td className="px-6 py-3.5"><DeptBadge dept={u.role} /></td>
-                          <td className="px-6 py-3.5 text-white/40 text-xs whitespace-nowrap">{fmtDate(u.created_at)}</td>
-                          <td className="px-6 py-3.5 text-right">
-                            <button
-                              onClick={() => toggleActive(u.id, u.is_active)}
-                              disabled={togglingId === u.id || u.id === user?.id}
-                              title={u.id === user?.id ? 'Cannot disable your own account' : undefined}
-                              className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-30 focus:outline-none ${
-                                u.is_active ? 'bg-emerald-500' : 'bg-white/10'
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
-                                  u.is_active ? 'translate-x-4' : 'translate-x-0.5'
-                                }`}
-                              />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      users.map((u) => {
+                        const displayEmail = isDemoAdmin && u.email.includes('shikharjain')
+                          ? 'admin@apex-systems.com'
+                          : u.email
+                        return (
+                          <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-3.5 text-white/80 text-xs">{displayEmail}</td>
+                            <td className="px-6 py-3.5"><DeptBadge dept={u.role} /></td>
+                            <td className="px-6 py-3.5 text-white/40 text-xs whitespace-nowrap">{fmtDate(u.created_at)}</td>
+                            <td className="px-6 py-3.5 text-right" style={{ overflow: 'visible' }}>
+                              {isDemoAdmin ? (
+                                <Tooltip text="Demo accounts have read-only access">
+                                  <button
+                                    disabled
+                                    className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full disabled:opacity-30 cursor-not-allowed focus:outline-none ${
+                                      u.is_active ? 'bg-emerald-500' : 'bg-white/10'
+                                    }`}
+                                  >
+                                    <span
+                                      className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow ${
+                                        u.is_active ? 'translate-x-4' : 'translate-x-0.5'
+                                      }`}
+                                    />
+                                  </button>
+                                </Tooltip>
+                              ) : (
+                                <button
+                                  onClick={() => toggleActive(u.id, u.is_active)}
+                                  disabled={togglingId === u.id || u.id === user?.id}
+                                  title={u.id === user?.id ? 'Cannot disable your own account' : undefined}
+                                  className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-30 focus:outline-none ${
+                                    u.is_active ? 'bg-emerald-500' : 'bg-white/10'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+                                      u.is_active ? 'translate-x-4' : 'translate-x-0.5'
+                                    }`}
+                                  />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })
                     )}
                   </tbody>
                 </table>
@@ -421,21 +527,42 @@ export default function AdminPage() {
                 )}
               </div>
               <div className="flex flex-col items-end gap-2">
-                <button
-                  onClick={triggerEval}
-                  disabled={runningEval}
-                  className="px-4 py-1.5 rounded-lg bg-white text-black text-sm font-medium disabled:opacity-40 hover:bg-white/90 transition-colors whitespace-nowrap"
-                >
-                  {runningEval ? 'Starting…' : 'Run Eval'}
-                </button>
-                {evalStarted && (
-                  <span className="text-xs text-emerald-400">Started — results appear in a few minutes.</span>
+                {isDemoAdmin ? (
+                  <Tooltip text="Demo accounts cannot run evaluations.">
+                    <button
+                      disabled
+                      className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white text-black text-sm font-medium opacity-40 whitespace-nowrap cursor-not-allowed"
+                    >
+                      Run Eval
+                    </button>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={triggerEval}
+                    disabled={runningEval || evalPolling}
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white text-black text-sm font-medium disabled:opacity-40 hover:bg-white/90 transition-colors whitespace-nowrap"
+                  >
+                    {evalPolling && (
+                      <span className="h-3.5 w-3.5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+                    )}
+                    {runningEval ? 'Starting…' : evalPolling ? 'Running…' : 'Run Eval'}
+                  </button>
                 )}
                 {evalError && (
                   <span className="text-xs text-rose-400">{evalError}</span>
                 )}
               </div>
             </div>
+
+            {evalPolling && (
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 flex items-start gap-3">
+                <span className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 rounded-full border-2 border-amber-500/40 border-t-amber-400 animate-spin" />
+                <div>
+                  <p className="text-xs font-medium text-amber-400">Evaluation in progress</p>
+                  <p className="text-xs text-amber-400/60 mt-0.5">Typically takes 5–8 minutes. Results will update automatically.</p>
+                </div>
+              </div>
+            )}
 
             {evalLoading ? (
               <Spinner />
@@ -449,7 +576,7 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
-                {evalResults !== null && evalResults.length === 0 && (
+                {evalResults !== null && evalResults.length === 0 && !evalPolling && (
                   <p className="text-center text-sm text-white/25 py-4">
                     No eval results yet. Click "Run Eval" to start.
                   </p>

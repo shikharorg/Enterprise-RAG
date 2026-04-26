@@ -33,6 +33,54 @@ Both reforecast submissions are due from functional leaders within 10 business d
 
 Material variances — greater than 5% on any revenue line item, greater than $250,000 on any expense line item, or greater than 10 FTEs on the headcount plan — require a written variance explanation in the reforecast memo. Explanations should describe the cause of the variance, the impact on the business, and the corrective action if the variance is unfavorable.
 
+Quarterly Budget Review Schedule
+
+Apex Systems conducts four formal quarterly budget reviews each year. These reviews are distinct from the monthly finance leadership review and the twice-yearly reforecast process. The quarterly reviews are the primary forum where department heads and the CFO assess performance against plan, align on a revised full-year outlook, and make formal decisions about budget adjustments. Each review follows a fixed calendar, a defined attendee list, a structured agenda, and a documented approval process.
+
+Q1 Budget Review — April
+
+The Q1 review is held during the first two weeks of April, covering actual results for January through March. The review is a half-day session, typically three hours, scheduled by the FP&A team no later than March 25.
+
+Attendees: CFO, VP Finance, FP&A lead, all finance business partners, and all department heads. The CEO attends the opening segment covering company-level revenue performance and exits before the cost center breakout sessions. Legal and People Operations department heads attend only their respective cost center segment.
+
+What is reviewed: Actuals versus budget for Q1 across all cost centers and natural account categories. Variance analysis for every line item exceeding the materiality threshold of 10% or $25,000, whichever is greater. Personnel cost actuals versus headcount plan, including any open requisitions, recent hires, and attrition. Software and SaaS spend versus contracted commitments. A Q1 cash flow summary and comparison to the cash forecast approved in December. Early signals on full-year revenue tracking. The FP&A team presents a preliminary Q1 reforecast for the full year based on Q1 actuals and any known changes to business conditions.
+
+Approval process: Within five business days of the Q1 review, department heads submit any budget amendment requests identified during the session to their finance business partner. The FP&A team consolidates requests and presents a recommended amendment package to the CFO within ten business days. The CFO approves, rejects, or defers each amendment. Approved amendments are reflected in the budget system by April 30 and communicated to cost center owners in writing.
+
+Q2 Budget Review — July
+
+The Q2 review is held during the first two weeks of July, covering actual results for April through June and the full first half of the year. This is the most consequential quarterly review because it informs the Q2 reforecast, which may result in material adjustments to the second-half plan. The review is a full-day session, typically five to six hours.
+
+Attendees: CFO, CEO, VP Finance, FP&A lead, all finance business partners, all department heads, and the Chief Revenue Officer. The board audit committee chair receives the Q2 review package as a read-only distribution within five business days of the session.
+
+What is reviewed: Actuals versus budget for Q2 and the full first half. Detailed variance analysis with written explanations required for all variances exceeding the materiality threshold. Updated full-year revenue forecast compared to the annual plan, including deal pipeline coverage, renewal rates, and expansion revenue. Second-half operating expense plan versus first-half run rate. Headcount plan versus actuals, including a review of open requisitions and projected hiring velocity for the remainder of the year. Cash position and updated twelve-month cash flow forecast. A formal Q2 reforecast for the full year, presented by FP&A, which the CFO and CEO must approve before it is distributed externally or used in board materials.
+
+The Q2 review session concludes with a structured decision segment where the CFO and CEO make explicit go or no-go decisions on any material investments, headcount additions, or spend holds that were flagged during the session. Decisions are documented in the Q2 review minutes, which are distributed to all attendees and retained in the Finance document archive.
+
+Approval process: The Q2 reforecast, once approved by the CFO and CEO in the session or within three business days afterward, constitutes the revised operating plan for the second half. Department heads whose second-half budgets differ materially from the original annual plan are issued amended cost center budgets by July 31. Any second-half headcount additions approved in the Q2 review are treated as plan-approved and do not require a separate CFO approval when the job description is posted.
+
+Q3 Budget Review — October
+
+The Q3 review is held during the first two weeks of October, covering actual results for July through September. Because October also marks the start of the annual planning cycle for the following year, the Q3 review serves two purposes: it closes out the current-year outlook and provides the baseline assumptions for the following year's budget guidance.
+
+Attendees: CFO, VP Finance, FP&A lead, all finance business partners, and all department heads. The CEO attends a summary segment at the end of the session focused on year-end outlook and next-year preliminary signals.
+
+What is reviewed: Actuals versus budget for Q3 and year-to-date through September. Variance analysis with required explanations. Updated full-year revenue and expense outlook based on Q3 actuals. A fourth-quarter expense forecast by cost center, showing expected spend for October through December and projected year-end actuals. Assessment of any budget remaining in cost centers that is unlikely to be spent by year-end, which may be subject to reallocation or carry-forward restrictions. A preliminary view of the following year's cost base, including known contract renewals, anticipated headcount needs, and major technology or infrastructure investments under consideration. The FP&A team presents the Q3 reforecast for the full year; this is a working document, not a formally approved reforecast, and is used primarily to set expectations for the December board materials.
+
+Approval process: Within five business days of the Q3 review, department heads confirm their Q4 spending plans with their finance business partner. Any unspent budget that a department head intends to deploy in Q4 must be re-justified if it represents a new commitment not previously approved. Unspent budget that will not be deployed in Q4 is flagged for year-end close. Budget reallocation requests arising from the Q3 review follow the standard budget transfer process and require CFO approval for cross-department transfers exceeding $50,000.
+
+Q4 and Annual Review — January
+
+The Q4 and annual review is held in January, covering actual results for October through December and the full fiscal year. This is the retrospective review of the year just closed and is scheduled after the accounting close is complete, typically the third or fourth week of January.
+
+Attendees: CFO, CEO, VP Finance, FP&A lead, all finance business partners, all department heads, and the full senior leadership team. The board of directors receives the full-year results package at the January board meeting, which follows this review.
+
+What is reviewed: Full-year actuals versus annual budget for every cost center and natural account. Total company revenue versus plan, including analysis by product line, customer segment, and geography where applicable. Full-year headcount actuals versus the plan approved in the prior December board meeting, including total hires, attrition, and ending headcount by function. Operating expense actuals versus plan and versus the Q2 reforecast, to assess forecasting accuracy. Cash position at December 31 versus the forecast. Capital expenditure actuals versus the capitalized asset budget. A written post-mortem from each department head summarizing the three most significant budget variances in their cost center, what drove them, and what changes to planning process or business operations would prevent similar variances in the current year.
+
+The Q4 and annual review also includes a formal assessment of the budget planning process itself. The FP&A team presents a forecast accuracy report showing how each quarterly reforecast compared to actual results, which cost centers had the most chronic variances, and where the planning calendar or template should be adjusted for the current year.
+
+Approval process: No budget amendments are issued following the Q4 and annual review, since the fiscal year is closed. The primary output is the full-year results package presented to the board in January and the lessons-learned documentation incorporated into the planning guidance issued by the CFO on September 1 of the current year. Department heads whose full-year actuals deviated from plan by more than 15% on any single cost category are required to meet with the CFO and their finance business partner in February to discuss root causes and process improvements before the current-year planning cycle begins.
+
 Budget Structure and Coding
 
 Budgets are organized by cost center. Each cost center is a six-digit code assigned by Finance and corresponds to a single functional team with one designated owner and one finance business partner. Cost center owners are responsible for all spending within their center.

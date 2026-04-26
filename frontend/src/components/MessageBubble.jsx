@@ -6,35 +6,60 @@ const DEPT_BG = {
   finance: '#059669',
 }
 
-export default function MessageBubble({ role, content, userRole, sources }) {
+function toBoldHtml(text) {
+  const markers = (text.match(/\*\*/g) || []).length
+  const cleaned = markers % 2 !== 0 ? text.replace(/\*\*(?=[^*]*$)/, '') : text
+  return cleaned
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
+}
+
+export default function MessageBubble({ role, content, userRole, sources, streaming }) {
   const isUser = role === 'user'
   const userBg = DEPT_BG[userRole] ?? '#374151'
 
+  const unique = !isUser && sources && sources.length > 0
+    ? Array.from(
+        sources.reduce((map, s) => {
+          const key = s.source || 'unknown'
+          if (!map.has(key) || (s.rerank_score ?? 0) > (map.get(key).rerank_score ?? 0)) {
+            map.set(key, s)
+          }
+          return map
+        }, new Map()).values()
+      ).filter((s) => (s.rerank_score ?? 0) >= 5)
+    : []
+
   return (
-    <div className={`flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
+    <div
+      className={`flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}
+      style={{ animation: 'msgFadeIn 0.2s ease both' }}
+    >
       <div
-        className="max-w-[78%] px-3.5 py-2.5 text-sm whitespace-pre-wrap leading-relaxed"
+        className="max-w-[78%] px-3.5 py-2.5 text-sm leading-relaxed"
         style={{
           borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
           ...(isUser
-            ? { background: userBg, color: '#fff' }
+            ? { background: userBg, color: '#fff', whiteSpace: 'pre-wrap' }
             : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.08)' })
         }}
       >
-        {content}
+        {isUser
+          ? content
+          : <span
+              style={{ whiteSpace: 'pre-wrap' }}
+              dangerouslySetInnerHTML={{ __html: toBoldHtml(content) }}
+            />
+        }
       </div>
-      {!isUser && sources && sources.length > 0 && (
+      {unique.length > 0 && (
         <div className="flex gap-1.5 flex-wrap max-w-[78%]">
-          {Object.values(
-            sources.reduce((acc, s) => {
-              const key = s.source
-              if (!acc[key] || (s.rerank_score ?? -Infinity) > (acc[key].rerank_score ?? -Infinity))
-                acc[key] = s
-              return acc
-            }, {})
-          ).map((s) => <SourceCard key={s.source} source={s} />)}
+          {unique.map((s) => <SourceCard key={s.source || s.chunk_id} source={s} />)}
         </div>
       )}
+      <style>{`@keyframes msgFadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }`}</style>
     </div>
   )
 }

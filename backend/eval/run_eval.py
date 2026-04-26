@@ -5,11 +5,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import csv
 import json
+import math
 import uuid
 from datetime import datetime, timezone
 
 from datasets import Dataset
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from ragas import evaluate
 from ragas.metrics import (
     answer_relevancy,
@@ -95,18 +96,8 @@ def save_results_csv(scores: dict, timestamp: str) -> Path:
 
 
 async def save_results_db(scores: dict, run_id: uuid.UUID, run_at: datetime) -> None:
-    async with AsyncSessionLocal() as session:
-        for metric_name, score in scores.items():
-            session.add(
-                EvalResult(
-                    run_id=run_id,
-                    metric_name=metric_name,
-                    score=float(score),
-                    run_at=run_at,
-                )
-            )
-        await session.commit()
-    logger.info("Persisted %d eval rows to Postgres for run_id=%s", len(scores), run_id)
+    from app.services.admin_service import save_eval_results
+    await save_eval_results(run_id, scores, run_at)
 
 
 async def run_evaluation() -> tuple[uuid.UUID, dict, Path]:
@@ -127,24 +118,56 @@ async def run_evaluation() -> tuple[uuid.UUID, dict, Path]:
 
     dataset = Dataset.from_list(rows)
 
+    _RAGAS_TIMEOUT = 120
+
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         api_key=_s.openai_api_key,
-        timeout=_s.openai_timeout_seconds,
+        timeout=_RAGAS_TIMEOUT,
+        max_retries=1,
+    )
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-small",
+        api_key=_s.openai_api_key,
     )
 
+    def _is_nan_list(v) -> bool:
+        if not isinstance(v, list) or not v:
+            return True
+        return all(x is None or (isinstance(x, float) and math.isnan(x)) for x in v)
+
+    def _mean(v) -> float:
+        valid = [x for x in (v if isinstance(v, list) else []) if x is not None and not (isinstance(x, float) and math.isnan(x))]
+        return sum(valid) / len(valid) if valid else float("nan")
+
     logger.info("Running RAGAS evaluation on %d samples...", len(rows))
-    result = evaluate(dataset=dataset, metrics=METRICS, llm=llm)
+    result = evaluate(dataset=dataset, metrics=METRICS, llm=llm, embeddings=embeddings)
 
-    scores = {
-        "faithfulness": result["faithfulness"],
-        "answer_relevancy": result["answer_relevancy"],
-        "context_recall": result["context_recall"],
-        "context_precision": result["context_precision"],
-    }
+    per_metric: dict[str, list] = {m.name: result[m.name] for m in METRICS}
 
-    for metric, score in scores.items():
-        logger.info("  %-25s %.4f", metric, score)
+    nan_metrics = [m for m in METRICS if _is_nan_list(per_metric[m.name])]
+    if nan_metrics:
+        logger.warning("Retrying %d NaN metrics: %s", len(nan_metrics), [m.name for m in nan_metrics])
+        try:
+            retry_result = evaluate(dataset=dataset, metrics=nan_metrics, llm=llm, embeddings=embeddings)
+            for m in nan_metrics:
+                retry_scores = retry_result[m.name]
+                if not _is_nan_list(retry_scores):
+                    per_metric[m.name] = retry_scores
+                    logger.info("Retry succeeded for metric %s", m.name)
+                else:
+                    logger.warning("Retry also NaN for metric %s — will be skipped", m.name)
+        except Exception as exc:
+            logger.error("Metric retry failed: %s", exc)
+
+    scores = {}
+    for name, sample_scores in per_metric.items():
+        mean = _mean(sample_scores)
+        if not (isinstance(mean, float) and math.isnan(mean)):
+            scores[name] = mean
+            logger.info("  %-25s %.4f", name, mean)
+        else:
+            logger.warning("  %-25s NaN — skipping", name)
 
     run_id = uuid.uuid4()
     run_at = datetime.now(timezone.utc)

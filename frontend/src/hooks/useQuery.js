@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import api from '../services/api'
 
 export function useQuery() {
   const [messages, setMessages] = useState([])
   const [thinking, setThinking] = useState(false)
+  const pendingTokensRef = useRef([])
+  const rafIdRef = useRef(null)
 
   function appendMessage(msg) {
     setMessages((prev) => [...prev, msg])
@@ -35,7 +37,7 @@ export function useQuery() {
       return
     }
 
-    appendMessage({ role: 'assistant', content: '', sources: [] })
+    appendMessage({ role: 'assistant', content: '', sources: [], streaming: true })
 
     try {
       const res = await fetch('/api/v1/query', {
@@ -67,15 +69,32 @@ export function useQuery() {
           const payload = JSON.parse(line.slice(6))
           if (payload.token !== undefined) {
             setThinking(false)
-            updateLastAssistant((prev) => ({ content: (prev.content ?? '') + payload.token }))
+            pendingTokensRef.current.push(payload.token)
+            if (rafIdRef.current === null) {
+              rafIdRef.current = requestAnimationFrame(() => {
+                rafIdRef.current = null
+                const batch = pendingTokensRef.current.splice(0).join('')
+                if (batch) updateLastAssistant((prev) => ({ content: (prev.content ?? '') + batch }))
+              })
+            }
           }
           if (payload.done) {
-            updateLastAssistant({ sources: payload.sources ?? [] })
+            if (rafIdRef.current !== null) {
+              cancelAnimationFrame(rafIdRef.current)
+              rafIdRef.current = null
+            }
+            const remaining = pendingTokensRef.current.splice(0).join('')
+            if (remaining) updateLastAssistant((prev) => ({ content: (prev.content ?? '') + remaining }))
+            updateLastAssistant({ sources: payload.sources ?? [], streaming: false })
           }
         }
       }
     } finally {
       setThinking(false)
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
+        rafIdRef.current = null
+      }
     }
   }
 

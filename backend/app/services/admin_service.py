@@ -1,4 +1,5 @@
 import asyncio
+import math
 import uuid
 from datetime import datetime, timezone
 
@@ -8,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.db.models import Document, EvalResult, RoleEnum, User
+from app.db.postgres import AsyncSessionLocal
 from app.retrieval.dense import get_client as get_qdrant_client
 from app.state import rag_slots_in_use
 from app.utils.logger import get_logger
@@ -158,6 +160,29 @@ async def set_user_active(db: AsyncSession, user_id: uuid.UUID, is_active: bool)
     user.is_active = is_active
     logger.info("Set user %s is_active=%s", user_id, is_active)
     return user
+
+
+async def save_eval_results(
+    run_id: uuid.UUID,
+    scores: dict,
+    run_at: datetime,
+) -> int:
+    saved = 0
+    async with AsyncSessionLocal() as session:
+        for metric_name, score in scores.items():
+            if score is None or (isinstance(score, float) and math.isnan(score)):
+                logger.warning("Skipping NaN score for metric=%s run_id=%s", metric_name, run_id)
+                continue
+            session.add(EvalResult(
+                run_id=run_id,
+                metric_name=metric_name,
+                score=float(score),
+                run_at=run_at,
+            ))
+            saved += 1
+        await session.commit()
+    logger.info("Persisted %d eval rows to Postgres for run_id=%s", saved, run_id)
+    return saved
 
 
 async def get_eval_results(

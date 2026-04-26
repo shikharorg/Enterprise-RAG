@@ -1,75 +1,430 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMe, login } from "../services/auth";
 
-const DEPARTMENTS = [
+const FONT = "'Inter', ui-sans-serif, system-ui, sans-serif";
+const MONO = "'JetBrains Mono', 'Fira Mono', 'Consolas', monospace";
+const MOCK_SPEED = 18;
+const MOCK_DELAY = 600;
+const HOVER_DEBOUNCE = 300;
+
+const MOCK_CONVOS = {
+  hr: {
+    accent: "#8b5cf6",
+    bubbleAccent: "#7c3aed",
+    chipBg: "rgba(139,92,246,0.15)",
+    chipBorder: "rgba(139,92,246,0.25)",
+    chipText: "#a78bfa",
+    label: "hr",
+    email: "hr@demo.com",
+    question: "What is the parental leave policy?",
+    answer:
+      "Apex Systems provides 16 weeks of fully paid parental leave for primary caregivers and 8 weeks for secondary caregivers. Leave may begin up to 2 weeks before the expected due date. Both birth and adoptive parents are eligible, and leave can be taken in one continuous block or split into two periods within the first year.",
+    source: "leave_policy.txt",
+    score: "94%",
+    placeholder: "Ask about HR documents…",
+  },
+  engineering: {
+    accent: "#0ea5e9",
+    bubbleAccent: "#0284c7",
+    chipBg: "rgba(14,165,233,0.15)",
+    chipBorder: "rgba(14,165,233,0.25)",
+    chipText: "#38bdf8",
+    label: "engineering",
+    email: "engineering@demo.com",
+    question: "How does the deployment pipeline work?",
+    answer:
+      "All production deployments go through a three-stage pipeline: CI runs tests and builds the artifact, staging receives the build for smoke tests and canary validation, then a manual approval gate triggers the production rollout. Rollbacks are automated — if error rate exceeds 1% within 10 minutes of deploy, the previous artifact is redeployed without human intervention.",
+    source: "deployment_runbook.txt",
+    score: "91%",
+    placeholder: "Ask about Engineering documents…",
+  },
+  finance: {
+    accent: "#10b981",
+    bubbleAccent: "#059669",
+    chipBg: "rgba(16,185,129,0.15)",
+    chipBorder: "rgba(16,185,129,0.25)",
+    chipText: "#34d399",
+    label: "finance",
+    email: "finance@demo.com",
+    question: "What is the expense reimbursement limit?",
+    answer:
+      "Individual contributors may approve purchases up to $500 per transaction within an approved budget line. People managers have authority up to $5,000, directors up to $25,000, and VPs up to $100,000. Any transaction exceeding $500,000 requires CEO and board approval. Approval must be obtained before committing — retroactive approval is not permitted.",
+    source: "budget_policy.txt",
+    score: "97%",
+    placeholder: "Ask about Finance documents…",
+  },
+};
+
+const DEPTS = [
   {
     email: "hr@demo.com",
     password: "hr-demo-2026",
+    key: "hr",
     name: "Human Resources",
-    label: "Enter as HR",
-    description:
-      "Policies, onboarding guides, compensation bands, performance review templates, and employee handbooks.",
-    accent: "from-violet-500/20 to-violet-500/5",
-    border: "border-violet-500/20 hover:border-violet-500/50",
-    dot: "bg-violet-400",
-    btn: "bg-violet-600 hover:bg-violet-500",
-    tag: "text-violet-400",
+    accent: "#8b5cf6",
+    tagline: "Policies, benefits, compensation, and employee handbooks.",
+    redirect: "/chat",
   },
   {
     email: "engineering@demo.com",
     password: "eng-demo-2026",
+    key: "engineering",
     name: "Engineering",
-    label: "Enter as Engineering",
-    description:
-      "Architecture decision records, runbooks, API references, incident postmortems, and system design docs.",
-    accent: "from-sky-500/20 to-sky-500/5",
-    border: "border-sky-500/20 hover:border-sky-500/50",
-    dot: "bg-sky-400",
-    btn: "bg-sky-600 hover:bg-sky-500",
-    tag: "text-sky-400",
+    accent: "#0ea5e9",
+    tagline: "Runbooks, architecture decisions, and incident postmortems.",
+    redirect: "/chat",
   },
   {
     email: "finance@demo.com",
     password: "fin-demo-2026",
+    key: "finance",
     name: "Finance",
-    label: "Enter as Finance",
-    description:
-      "Quarterly reports, budget forecasts, expense policies, audit trails, and investor briefings.",
-    accent: "from-emerald-500/20 to-emerald-500/5",
-    border: "border-emerald-500/20 hover:border-emerald-500/50",
-    dot: "bg-emerald-400",
-    btn: "bg-emerald-600 hover:bg-emerald-500",
-    tag: "text-emerald-400",
+    accent: "#10b981",
+    tagline: "Budget policy, expense guidelines, and audit documentation.",
+    redirect: "/chat",
+  },
+  {
+    email: "demo@apex-systems.com",
+    password: "demo-admin-2026",
+    key: "admin",
+    name: "Admin Panel",
+    accent: "#94a3b8",
+    tagline: "Document management, user controls, and live RAGAS evaluation scores.",
+    redirect: "/admin-panel",
   },
 ];
 
-const HOW_IT_WORKS = [
+const STEPS = [
   {
-    step: "01",
-    title: "Select a role",
-    desc: "Choose your department to authenticate as that role.",
+    n: "01",
+    title: "Select your role",
+    desc: "Authenticate as HR, Engineering, or Finance. Your role determines which documents are in scope.",
   },
   {
-    step: "02",
-    title: "Ask questions",
-    desc: "Query your knowledge base in plain language.",
+    n: "02",
+    title: "Ask in plain language",
+    desc: "No query syntax. No keyword matching. Ask exactly what you need to know.",
   },
   {
-    step: "03",
+    n: "03",
     title: "Get cited answers",
-    desc: "Receive answers grounded in your department's documents.",
+    desc: "Every answer includes the source document and a relevance score. Nothing is made up.",
   },
 ];
+
+const TECH_GROUPS = [
+  {
+    label: "RETRIEVAL",
+    items: [
+      { name: "Qdrant", desc: "Vector store" },
+      { name: "BM25s", desc: "Sparse retrieval" },
+      { name: "Hybrid Search", desc: "BM25 + dense fusion" },
+      { name: "bge-small", desc: "Embeddings" },
+    ],
+  },
+  {
+    label: "GENERATION",
+    items: [
+      { name: "GPT-4o-mini", desc: "Answer generation" },
+      { name: "cross-encoder", desc: "Result reranking" },
+    ],
+  },
+  {
+    label: "INFRASTRUCTURE",
+    items: [
+      { name: "FastAPI", desc: "Async Python API" },
+      { name: "PostgreSQL", desc: "User store" },
+      { name: "React", desc: "Frontend" },
+    ],
+  },
+];
+
+function useMockTyping(key) {
+  const text = MOCK_CONVOS[key].answer;
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+  const idxRef = useRef(0);
+  const intervalRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    setDisplayed("");
+    setDone(false);
+    idxRef.current = 0;
+    clearInterval(intervalRef.current);
+    clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      intervalRef.current = setInterval(() => {
+        idxRef.current += 1;
+        setDisplayed(text.slice(0, idxRef.current));
+        if (idxRef.current >= text.length) {
+          clearInterval(intervalRef.current);
+          setDone(true);
+        }
+      }, MOCK_SPEED);
+    }, MOCK_DELAY);
+
+    return () => {
+      clearTimeout(timeoutRef.current);
+      clearInterval(intervalRef.current);
+    };
+  }, [key]);
+
+  return { displayed, done };
+}
+
+function MockChatWindow({ deptKey }) {
+  const [currentKey, setCurrentKey] = useState(deptKey);
+  const [opacity, setOpacity] = useState(1);
+  const convo = MOCK_CONVOS[currentKey];
+  const { displayed, done } = useMockTyping(currentKey);
+
+  useEffect(() => {
+    if (deptKey === currentKey) return;
+    setOpacity(0);
+    const t = setTimeout(() => {
+      setCurrentKey(deptKey);
+      setOpacity(1);
+    }, 220);
+    return () => clearTimeout(t);
+  }, [deptKey]);
+
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(255,255,255,0.12)",
+        background: "#0a0a0a",
+        display: "flex",
+        flexDirection: "column",
+        height: 420,
+        overflow: "hidden",
+        fontFamily: FONT,
+      }}
+    >
+      {/* header */}
+      <div
+        style={{
+          padding: "12px 16px",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexShrink: 0,
+          transition: "opacity 0.22s",
+          opacity,
+        }}
+      >
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: convo.accent, display: "inline-block" }} />
+        <span style={{ fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: convo.accent }}>
+          {convo.label}
+        </span>
+        <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "rgba(255,255,255,0.2)" }}>
+          {convo.email}
+        </span>
+      </div>
+
+      {/* messages */}
+      <div
+        style={{
+          flex: 1,
+          padding: "20px 16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          overflowY: "auto",
+          transition: "opacity 0.22s",
+          opacity,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div
+            style={{
+              background: convo.bubbleAccent,
+              color: "#fff",
+              padding: "8px 14px",
+              borderRadius: "14px 4px 14px 14px",
+              fontSize: "0.8rem",
+              maxWidth: "75%",
+              lineHeight: 1.5,
+            }}
+          >
+            {convo.question}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+          <div
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "rgba(255,255,255,0.82)",
+              padding: "10px 14px",
+              borderRadius: "4px 14px 14px 14px",
+              fontSize: "0.8rem",
+              maxWidth: "88%",
+              lineHeight: 1.6,
+              minHeight: 20,
+            }}
+          >
+            {displayed || " "}
+            {!done && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 2,
+                  height: "0.9em",
+                  background: "rgba(255,255,255,0.5)",
+                  marginLeft: 2,
+                  verticalAlign: "text-bottom",
+                  animation: "blink 0.8s step-end infinite",
+                }}
+              />
+            )}
+          </div>
+
+          {done && (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "3px 10px",
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(255,255,255,0.04)",
+                borderRadius: 9999,
+                fontSize: "0.7rem",
+                color: "rgba(255,255,255,0.5)",
+                animation: "fadeIn 0.35s ease",
+              }}
+            >
+              <span
+                style={{
+                  background: convo.chipBg,
+                  color: convo.chipText,
+                  border: `1px solid ${convo.chipBorder}`,
+                  borderRadius: 9999,
+                  padding: "1px 6px",
+                  fontSize: "0.65rem",
+                  fontWeight: 500,
+                }}
+              >
+                {convo.label}
+              </span>
+              {convo.source}
+              <span style={{ color: "rgba(255,255,255,0.25)" }}>{convo.score}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* fake input */}
+      <div
+        style={{
+          padding: "10px 14px",
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          flexShrink: 0,
+          transition: "opacity 0.22s",
+          opacity,
+        }}
+      >
+        <div
+          style={{
+            padding: "7px 12px",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 8,
+            fontSize: "0.75rem",
+            color: "rgba(255,255,255,0.2)",
+          }}
+        >
+          {convo.placeholder}
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+      `}</style>
+    </div>
+  );
+}
+
+function HeroDeptCard({ dept, onEnter, loading, active, onHover, onLeave }) {
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
+  return (
+    <div
+      onClick={() => loading === null && onEnter(dept)}
+      onMouseEnter={() => { setHovered(true); onHover(); }}
+      onMouseLeave={() => { setHovered(false); setPressed(false); onLeave(); }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      style={{
+        background: "#111",
+        border: `1px solid ${active ? dept.accent : "rgba(255,255,255,0.08)"}`,
+        boxShadow: active ? `0 0 0 1px ${dept.accent}22, 0 0 16px ${dept.accent}18` : "none",
+        padding: "16px 20px",
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        cursor: loading !== null ? "not-allowed" : "pointer",
+        transition: "border-color 0.25s, box-shadow 0.25s, transform 0.1s",
+        transform: pressed ? "scale(0.98)" : "scale(1)",
+        opacity: loading !== null && loading !== dept.email ? 0.4 : 1,
+        userSelect: "none",
+      }}
+    >
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: dept.accent, flexShrink: 0 }} />
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: "0.8rem", fontWeight: 600, color: dept.accent, letterSpacing: "-0.01em" }}>
+          {loading === dept.email ? "Signing in…" : dept.name}
+        </div>
+        <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginTop: 2, lineHeight: 1.4 }}>
+          {dept.tagline}
+        </div>
+      </div>
+
+      <span
+        style={{
+          fontSize: "0.75rem",
+          fontWeight: 500,
+          color: dept.accent,
+          opacity: hovered && loading !== dept.email ? 1 : 0,
+          transition: "opacity 0.15s",
+          flexShrink: 0,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Enter →
+      </span>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const { setUser, logout } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState(null);
+  const [activeDept, setActiveDept] = useState("hr");
+  const hoverTimerRef = useRef(null);
 
-  async function handleDemo(dept) {
+  function handleCardHover(key) {
+    if (key === 'admin') return;
+    clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => setActiveDept(key), HOVER_DEBOUNCE);
+  }
+
+  function handleCardLeave() {
+    clearTimeout(hoverTimerRef.current);
+  }
+
+  async function handleEnter(dept) {
     setError(null);
     setLoading(dept.email);
     try {
@@ -77,7 +432,8 @@ export default function LandingPage() {
       await login(dept.email, dept.password);
       const me = await getMe();
       setUser(me);
-      navigate("/chat");
+      const dest = me.role === 'admin' ? '/admin-panel' : me.role === 'demo_admin' ? '/demo-admin' : '/chat';
+      navigate(dest);
     } catch {
       setError("Demo login failed. Make sure demo users are seeded.");
     } finally {
@@ -86,96 +442,183 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#0a0a0a] text-white flex flex-col overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-        }}
-      />
+    <div style={{ background: "#000", color: "#fff", fontFamily: FONT, overflowX: "hidden" }}>
 
-      <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-20">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs text-white/50 tracking-wide">
-            Live demo — no signup required
-          </span>
+      {/* ── HERO ─────────────────────────────────────────── */}
+      <section
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          maxWidth: 1160,
+          margin: "0 auto",
+          padding: "80px 48px",
+          boxSizing: "border-box",
+          gap: 80,
+        }}
+      >
+        {/* left */}
+        <div style={{ flex: "0 0 44%", display: "flex", flexDirection: "column" }}>
+          <h1
+            style={{
+              fontSize: "clamp(2.2rem, 3.8vw, 3.2rem)",
+              fontWeight: 700,
+              letterSpacing: "-0.04em",
+              lineHeight: 1.08,
+              margin: 0,
+              color: "#fff",
+            }}
+          >
+            The knowledge base<br />that knows<br />who's asking.
+          </h1>
+
+          <p
+            style={{
+              marginTop: 24,
+              fontSize: "0.95rem",
+              color: "rgba(255,255,255,0.38)",
+              lineHeight: 1.65,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Role-based document retrieval. Every answer cited.
+            Built for teams that handle sensitive information.
+          </p>
+
+          <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 2 }}>
+            {DEPTS.map((dept) => (
+              <HeroDeptCard
+                key={dept.key}
+                dept={dept}
+                onEnter={handleEnter}
+                loading={loading}
+                active={activeDept === dept.key}
+                onHover={() => handleCardHover(dept.key)}
+                onLeave={handleCardLeave}
+              />
+            ))}
+          </div>
+
+          {error && (
+            <p style={{ marginTop: 16, fontSize: "0.75rem", color: "#f87171" }}>{error}</p>
+          )}
         </div>
 
-        <h1 className="mt-4 text-center text-5xl font-bold tracking-tight text-white leading-tight max-w-2xl">
-          Enterprise Knowledge Base
-        </h1>
-        <p className="mt-4 text-center text-base text-white/40 max-w-lg leading-relaxed">
-          A role-based RAG system. Each department sees only its own documents.
-          Select a role to explore the knowledge base.
+        {/* right */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <MockChatWindow deptKey={activeDept} />
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ─────────────────────────────────── */}
+      <section
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          padding: "120px 48px",
+          maxWidth: 1160,
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <p style={{ fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", margin: "0 0 56px 0" }}>
+          How it works
         </p>
-
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-4xl">
-          {DEPARTMENTS.map((dept) => (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0 }}>
+          {STEPS.map((step, i) => (
             <div
-              key={dept.email}
-              className={`relative flex flex-col rounded-2xl border bg-gradient-to-b ${dept.accent} ${dept.border} p-6 transition-all duration-200`}
+              key={step.n}
+              style={{
+                borderLeft: i === 0 ? "none" : "1px solid rgba(255,255,255,0.07)",
+                paddingLeft: i === 0 ? 0 : 40,
+                paddingRight: 40,
+              }}
             >
-              <div className="flex items-center gap-2 mb-4">
-                <span className={`h-2 w-2 rounded-full ${dept.dot}`} />
-                <span
-                  className={`text-xs font-medium uppercase tracking-widest ${dept.tag}`}
-                >
-                  {dept.name}
-                </span>
-              </div>
-
-              <p className="text-sm text-white/50 leading-relaxed flex-1">
-                {dept.description}
+              <span style={{ display: "block", fontSize: "0.7rem", fontWeight: 500, color: "rgba(255,255,255,0.18)", letterSpacing: "0.06em", marginBottom: 18 }}>
+                {step.n}
+              </span>
+              <h3 style={{ fontSize: "0.95rem", fontWeight: 600, letterSpacing: "-0.02em", color: "#fff", margin: "0 0 10px 0" }}>
+                {step.title}
+              </h3>
+              <p style={{ fontSize: "0.825rem", color: "rgba(255,255,255,0.38)", lineHeight: 1.65, margin: 0 }}>
+                {step.desc}
               </p>
-
-              <button
-                onClick={() => handleDemo(dept)}
-                disabled={loading !== null}
-                className={`mt-6 w-full rounded-xl py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-40 ${dept.btn}`}
-              >
-                {loading === dept.email ? "Signing in…" : dept.label}
-              </button>
             </div>
           ))}
         </div>
+      </section>
 
-        {error && <p className="mt-6 text-sm text-red-400">{error}</p>}
-
-        <div className="mt-24 w-full max-w-4xl">
-          <p className="text-center text-[10px] font-semibold uppercase tracking-widest text-white/20 mb-10">
-            How it works
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {HOW_IT_WORKS.map(({ step, title, desc }) => (
-              <div key={step} className="flex flex-col items-center text-center">
-                <span className="text-xs font-mono text-white/20 mb-2">{step}</span>
-                <div className="h-px w-8 bg-white/10 mb-3" />
-                <h3 className="text-sm font-medium text-white/60">{title}</h3>
-                <p className="mt-1.5 text-xs text-white/25 leading-relaxed max-w-[180px]">
-                  {desc}
-                </p>
+      {/* ── TECH ─────────────────────────────────────────── */}
+      <section
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          padding: "100px 48px",
+          maxWidth: 1160,
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <p style={{ fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", margin: "0 0 48px 0" }}>
+          Built on
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0 }}>
+          {TECH_GROUPS.map((group, i) => (
+            <div
+              key={group.label}
+              style={{
+                borderLeft: i === 0 ? "none" : "1px solid rgba(255,255,255,0.07)",
+                paddingLeft: i === 0 ? 0 : 40,
+                paddingRight: 40,
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontFamily: MONO,
+                  fontSize: "0.65rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.1em",
+                  color: "rgba(255,255,255,0.2)",
+                  marginBottom: 24,
+                }}
+              >
+                [{group.label}]
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {group.items.map((t) => (
+                  <div key={t.name}>
+                    <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#fff", letterSpacing: "-0.01em" }}>
+                      {t.name}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
+                      {t.desc}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
 
-      <footer className="relative pb-6 flex flex-col items-center gap-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1">
-          <span className="text-[10px] text-white/20">
-            Built with FastAPI · Qdrant · GPT-4o-mini
-          </span>
-        </div>
-        <Link
-          to="/admin"
-          className="text-[11px] text-white/10 hover:text-white/25 transition-colors"
-        >
-          admin
-        </Link>
+      {/* ── FOOTER ───────────────────────────────────────── */}
+      <footer
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          padding: "28px 48px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          maxWidth: 1160,
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.18)" }}>rag.shikharjain.com</span>
       </footer>
+
     </div>
   );
 }

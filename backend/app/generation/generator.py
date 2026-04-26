@@ -38,7 +38,9 @@ def _build_prompt(query: str, chunks: list[dict]) -> list[dict]:
                 "You are a helpful enterprise knowledge assistant. "
                 "Answer the user's question using only the context provided. "
                 "Cite sources by their bracketed number, e.g. [1]. "
-                "If the retrieved context is not relevant to the question, "
+                "If the user sends a greeting or casual conversational message (e.g. hi, hello, hey, good morning, how are you, thanks), "
+                "respond warmly and briefly, then invite them to ask about their department's documents. "
+                "Only if the question is a genuine off-topic request unrelated to work (e.g. write me a poem, what is the weather), "
                 "respond with exactly: "
                 "\"I can only answer questions based on your department's documents.\""
             ),
