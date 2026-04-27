@@ -28,5 +28,10 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Claude
-CLAUDE.md
+# Virtual env
+envrag/
+
+# Generated data
+backend/data/bm25_index/
+backend/eval/results/
+
