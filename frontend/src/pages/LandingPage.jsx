@@ -17,13 +17,13 @@ const MOCK_CONVOS = {
     chipBorder: "rgba(139,92,246,0.25)",
     chipText: "#a78bfa",
     label: "hr",
+    name: "Human Resources",
     email: "hr@demo.com",
     question: "What is the parental leave policy?",
     answer:
       "Apex Systems provides 16 weeks of fully paid parental leave for primary caregivers and 8 weeks for secondary caregivers. Leave may begin up to 2 weeks before the expected due date. Both birth and adoptive parents are eligible, and leave can be taken in one continuous block or split into two periods within the first year.",
     source: "leave_policy.txt",
     score: "94%",
-    placeholder: "Ask about HR documents…",
   },
   engineering: {
     accent: "#0ea5e9",
@@ -32,13 +32,13 @@ const MOCK_CONVOS = {
     chipBorder: "rgba(14,165,233,0.25)",
     chipText: "#38bdf8",
     label: "engineering",
+    name: "Engineering",
     email: "engineering@demo.com",
     question: "How does the deployment pipeline work?",
     answer:
       "All production deployments go through a three-stage pipeline: CI runs tests and builds the artifact, staging receives the build for smoke tests and canary validation, then a manual approval gate triggers the production rollout. Rollbacks are automated — if error rate exceeds 1% within 10 minutes of deploy, the previous artifact is redeployed without human intervention.",
     source: "deployment_runbook.txt",
     score: "91%",
-    placeholder: "Ask about Engineering documents…",
   },
   finance: {
     accent: "#10b981",
@@ -47,13 +47,13 @@ const MOCK_CONVOS = {
     chipBorder: "rgba(16,185,129,0.25)",
     chipText: "#34d399",
     label: "finance",
+    name: "Finance",
     email: "finance@demo.com",
     question: "What is the expense reimbursement limit?",
     answer:
       "Individual contributors may approve purchases up to $500 per transaction within an approved budget line. People managers have authority up to $5,000, directors up to $25,000, and VPs up to $100,000. Any transaction exceeding $500,000 requires CEO and board approval. Approval must be obtained before committing — retroactive approval is not permitted.",
     source: "budget_policy.txt",
     score: "97%",
-    placeholder: "Ask about Finance documents…",
   },
 };
 
@@ -65,7 +65,6 @@ const DEPTS = [
     name: "Human Resources",
     accent: "#8b5cf6",
     tagline: "Policies, benefits, compensation, and employee handbooks.",
-    redirect: "/chat",
   },
   {
     email: "engineering@demo.com",
@@ -74,7 +73,6 @@ const DEPTS = [
     name: "Engineering",
     accent: "#0ea5e9",
     tagline: "Runbooks, architecture decisions, and incident postmortems.",
-    redirect: "/chat",
   },
   {
     email: "finance@demo.com",
@@ -83,7 +81,6 @@ const DEPTS = [
     name: "Finance",
     accent: "#10b981",
     tagline: "Budget policy, expense guidelines, and audit documentation.",
-    redirect: "/chat",
   },
   {
     email: "demo@apex-systems.com",
@@ -92,7 +89,6 @@ const DEPTS = [
     name: "Admin Panel",
     accent: "#94a3b8",
     tagline: "Document management, user controls, and live RAGAS evaluation scores.",
-    redirect: "/admin-panel",
   },
 ];
 
@@ -195,139 +191,184 @@ function MockChatWindow({ deptKey }) {
   return (
     <div
       style={{
-        border: "1px solid rgba(255,255,255,0.12)",
-        background: "#0a0a0a",
-        display: "flex",
-        flexDirection: "column",
-        height: 420,
+        background: "#0d0d0d",
+        border: "1px solid rgba(255,255,255,0.25)",
+        borderRadius: 12,
         overflow: "hidden",
         fontFamily: FONT,
+        display: "flex",
+        flexDirection: "column",
+        height: 404,
       }}
     >
       {/* header */}
       <div
         style={{
-          padding: "12px 16px",
+          padding: "10px 16px",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
           display: "flex",
           alignItems: "center",
           gap: 8,
           flexShrink: 0,
-          transition: "opacity 0.22s",
+          background: `${convo.accent}18`,
+          transition: "background 0.3s, opacity 0.22s",
           opacity,
         }}
       >
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: convo.accent, display: "inline-block" }} />
-        <span style={{ fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: convo.accent }}>
-          {convo.label}
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: convo.accent,
+            display: "inline-block",
+            boxShadow: `0 0 5px ${convo.accent}`,
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontSize: "0.7rem",
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.65)",
+          }}
+        >
+          {convo.name}
         </span>
-        <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "rgba(255,255,255,0.2)" }}>
-          {convo.email}
+        <span
+          style={{
+            marginLeft: "auto",
+            fontSize: "0.58rem",
+            fontWeight: 500,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.2)",
+          }}
+        >
+          Preview
         </span>
       </div>
 
-      {/* messages */}
-      <div
-        style={{
-          flex: 1,
-          padding: "20px 16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-          overflowY: "auto",
-          transition: "opacity 0.22s",
-          opacity,
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <div
-            style={{
-              background: convo.bubbleAccent,
-              color: "#fff",
-              padding: "8px 14px",
-              borderRadius: "14px 4px 14px 14px",
-              fontSize: "0.8rem",
-              maxWidth: "75%",
-              lineHeight: 1.5,
-            }}
-          >
-            {convo.question}
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
-          <div
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "rgba(255,255,255,0.82)",
-              padding: "10px 14px",
-              borderRadius: "4px 14px 14px 14px",
-              fontSize: "0.8rem",
-              maxWidth: "88%",
-              lineHeight: 1.6,
-              minHeight: 20,
-            }}
-          >
-            {displayed || " "}
-            {!done && (
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 2,
-                  height: "0.9em",
-                  background: "rgba(255,255,255,0.5)",
-                  marginLeft: 2,
-                  verticalAlign: "text-bottom",
-                  animation: "blink 0.8s step-end infinite",
-                }}
-              />
-            )}
-          </div>
-
-          {done && (
+      {/* messages — flex:1 so they fill the remaining height, fade at bottom */}
+      <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
+        <div
+          style={{
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            height: "100%",
+            boxSizing: "border-box",
+            overflowY: "hidden",
+            scrollbarWidth: "none",
+            transition: "opacity 0.22s",
+            opacity,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <div
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "3px 10px",
-                border: "1px solid rgba(255,255,255,0.10)",
-                background: "rgba(255,255,255,0.04)",
-                borderRadius: 9999,
-                fontSize: "0.7rem",
-                color: "rgba(255,255,255,0.5)",
-                animation: "fadeIn 0.35s ease",
+                background: convo.bubbleAccent,
+                color: "#fff",
+                padding: "8px 14px",
+                borderRadius: "14px 4px 14px 14px",
+                fontSize: "0.8rem",
+                maxWidth: "75%",
+                lineHeight: 1.5,
               }}
             >
-              <span
+              {convo.question}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+            <div
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.82)",
+                padding: "10px 14px",
+                borderRadius: "4px 14px 14px 14px",
+                fontSize: "0.8rem",
+                maxWidth: "88%",
+                lineHeight: 1.6,
+                minHeight: 20,
+              }}
+            >
+              {displayed || " "}
+              {!done && (
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 2,
+                    height: "0.9em",
+                    background: "rgba(255,255,255,0.5)",
+                    marginLeft: 2,
+                    verticalAlign: "text-bottom",
+                    animation: "blink 0.8s step-end infinite",
+                  }}
+                />
+              )}
+            </div>
+
+            {done && (
+              <div
                 style={{
-                  background: convo.chipBg,
-                  color: convo.chipText,
-                  border: `1px solid ${convo.chipBorder}`,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "3px 10px",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.04)",
                   borderRadius: 9999,
-                  padding: "1px 6px",
-                  fontSize: "0.65rem",
-                  fontWeight: 500,
+                  fontSize: "0.7rem",
+                  color: "rgba(255,255,255,0.5)",
+                  animation: "fadeIn 0.35s ease",
                 }}
               >
-                {convo.label}
-              </span>
-              {convo.source}
-              <span style={{ color: "rgba(255,255,255,0.25)" }}>{convo.score}</span>
-            </div>
-          )}
+                <span
+                  style={{
+                    background: convo.chipBg,
+                    color: convo.chipText,
+                    border: `1px solid ${convo.chipBorder}`,
+                    borderRadius: 9999,
+                    padding: "1px 6px",
+                    fontSize: "0.65rem",
+                    fontWeight: 500,
+                  }}
+                >
+                  {convo.label}
+                </span>
+                {convo.source}
+                <span style={{ color: "rgba(255,255,255,0.25)" }}>{convo.score}</span>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* fade-out gradient so text doesn't hard-clip */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 64,
+            background: "linear-gradient(to bottom, transparent, #0d0d0d)",
+            pointerEvents: "none",
+          }}
+        />
       </div>
 
-      {/* fake input */}
+      {/* grayed input — signals non-interactive */}
       <div
         style={{
           padding: "10px 14px",
-          borderTop: "1px solid rgba(255,255,255,0.07)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
           flexShrink: 0,
-          transition: "opacity 0.22s",
-          opacity,
+          opacity: 0.4,
         }}
       >
         <div
@@ -338,15 +379,17 @@ function MockChatWindow({ deptKey }) {
             borderRadius: 8,
             fontSize: "0.75rem",
             color: "rgba(255,255,255,0.2)",
+            cursor: "default",
           }}
         >
-          {convo.placeholder}
+          {convo.label === "hr" ? "Ask about HR policies…" : convo.label === "engineering" ? "Ask about Engineering docs…" : "Ask about Finance docs…"}
         </div>
       </div>
 
       <style>{`
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+        .chat-messages::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
@@ -356,6 +399,8 @@ function HeroDeptCard({ dept, onEnter, loading, active, onHover, onLeave }) {
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
 
+  const borderColor = active ? dept.accent : hovered ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.10)";
+
   return (
     <div
       onClick={() => loading === null && onEnter(dept)}
@@ -364,43 +409,61 @@ function HeroDeptCard({ dept, onEnter, loading, active, onHover, onLeave }) {
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => setPressed(false)}
       style={{
-        background: "#111",
-        border: `1px solid ${active ? dept.accent : "rgba(255,255,255,0.08)"}`,
-        boxShadow: active ? `0 0 0 1px ${dept.accent}22, 0 0 16px ${dept.accent}18` : "none",
-        padding: "16px 20px",
+        background: active ? "rgba(255,255,255,0.06)" : "transparent",
+        borderTop: `1px solid ${borderColor}`,
+        borderRight: `1px solid ${borderColor}`,
+        borderBottom: `1px solid ${borderColor}`,
+        borderLeft: active ? `4px solid ${dept.accent}` : `1px solid ${borderColor}`,
+        boxShadow: active
+          ? `0 0 0 1px ${dept.accent}30, 0 0 27px ${dept.accent}27`
+          : hovered
+          ? "none"
+          : "none",
+        padding: active ? "12px 20px 12px 17px" : "12px 20px",
         display: "flex",
         alignItems: "center",
-        gap: 16,
+        gap: 14,
         cursor: loading !== null ? "not-allowed" : "pointer",
-        transition: "border-color 0.25s, box-shadow 0.25s, transform 0.1s",
-        transform: pressed ? "scale(0.98)" : "scale(1)",
+        transition: "background 0.15s, box-shadow 0.15s, transform 0.15s",
+        transform: hovered && !pressed ? "scale(1.01)" : pressed ? "scale(0.99)" : "scale(1)",
         opacity: loading !== null && loading !== dept.email ? 0.4 : 1,
         userSelect: "none",
       }}
     >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: dept.accent, flexShrink: 0 }} />
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: active ? dept.accent : `${dept.accent}60`,
+          flexShrink: 0,
+          transition: "background 0.15s",
+          boxShadow: active ? `0 0 6px ${dept.accent}` : "none",
+        }}
+      />
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "0.8rem", fontWeight: 600, color: dept.accent, letterSpacing: "-0.01em" }}>
+        <div style={{ fontSize: "0.8rem", fontWeight: 600, color: active ? "#fff" : dept.accent, letterSpacing: "-0.01em" }}>
           {loading === dept.email ? "Signing in…" : dept.name}
         </div>
-        <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginTop: 2, lineHeight: 1.4 }}>
+        <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.32)", marginTop: 2, lineHeight: 1.4 }}>
           {dept.tagline}
         </div>
       </div>
 
       <span
         style={{
-          fontSize: "0.75rem",
+          fontSize: "0.72rem",
           fontWeight: 500,
           color: dept.accent,
           opacity: hovered && loading !== dept.email ? 1 : 0,
-          transition: "opacity 0.15s",
+          transform: hovered && loading !== dept.email ? "translateX(0)" : "translateX(-10px)",
+          transition: "opacity 0.15s, transform 0.15s",
           flexShrink: 0,
           whiteSpace: "nowrap",
         }}
       >
-        Enter →
+        Open workspace →
       </span>
     </div>
   );
@@ -415,7 +478,7 @@ export default function LandingPage() {
   const hoverTimerRef = useRef(null);
 
   function handleCardHover(key) {
-    if (key === 'admin') return;
+    if (key === "admin") return;
     clearTimeout(hoverTimerRef.current);
     hoverTimerRef.current = setTimeout(() => setActiveDept(key), HOVER_DEBOUNCE);
   }
@@ -432,7 +495,7 @@ export default function LandingPage() {
       await login(dept.email, dept.password);
       const me = await getMe();
       setUser(me);
-      const dest = me.role === 'admin' ? '/admin-panel' : me.role === 'demo_admin' ? '/demo-admin' : '/chat';
+      const dest = me.role === "admin" ? "/admin-panel" : me.role === "demo_admin" ? "/demo-admin" : "/chat";
       navigate(dest);
     } catch {
       setError("Demo login failed. Make sure demo users are seeded.");
@@ -442,7 +505,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div style={{ background: "#000", color: "#fff", fontFamily: FONT, overflowX: "hidden" }}>
+    <div style={{ background: "#0f1115", color: "#fff", fontFamily: FONT, overflowX: "hidden" }}>
 
       {/* ── HERO ─────────────────────────────────────────── */}
       <section
@@ -454,59 +517,94 @@ export default function LandingPage() {
           margin: "0 auto",
           padding: "80px 48px",
           boxSizing: "border-box",
-          gap: 80,
         }}
       >
-        {/* left */}
-        <div style={{ flex: "0 0 44%", display: "flex", flexDirection: "column" }}>
-          <h1
-            style={{
-              fontSize: "clamp(2.2rem, 3.8vw, 3.2rem)",
-              fontWeight: 700,
-              letterSpacing: "-0.04em",
-              lineHeight: 1.08,
-              margin: 0,
-              color: "#fff",
-            }}
-          >
-            The knowledge base<br />that knows<br />who's asking.
-          </h1>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            alignItems: "flex-start",
+            columnGap: 72,
+            width: "100%",
+          }}
+        >
+          {/* left */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span
+              style={{
+                fontSize: "0.6rem",
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.28)",
+                marginBottom: 14,
+              }}
+            >
+              Role-Based Knowledge
+            </span>
 
-          <p
-            style={{
-              marginTop: 24,
-              fontSize: "0.95rem",
-              color: "rgba(255,255,255,0.38)",
-              lineHeight: 1.65,
-              letterSpacing: "-0.01em",
-            }}
-          >
-            Role-based document retrieval. Every answer cited.
-            Built for teams that handle sensitive information.
-          </p>
+            <h1
+              style={{
+                fontSize: "2.475rem",
+                fontWeight: 700,
+                letterSpacing: "-0.04em",
+                lineHeight: 1.1,
+                margin: 0,
+                color: "#fff",
+              }}
+            >
+              The knowledge base<br />that knows<br />who's asking.
+            </h1>
 
-          <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 2 }}>
-            {DEPTS.map((dept) => (
-              <HeroDeptCard
-                key={dept.key}
-                dept={dept}
-                onEnter={handleEnter}
-                loading={loading}
-                active={activeDept === dept.key}
-                onHover={() => handleCardHover(dept.key)}
-                onLeave={handleCardLeave}
-              />
-            ))}
+            <p
+              style={{
+                marginTop: 0,
+                fontSize: "0.9rem",
+                color: "rgba(255,255,255,0.38)",
+                lineHeight: 1.65,
+                letterSpacing: "-0.01em",
+                maxWidth: 380,
+              }}
+            >
+              Role-based document retrieval. Every answer cited.
+              Built for teams that handle sensitive information.
+            </p>
+
+            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 2 }}>
+              <p
+                style={{
+                  margin: "0 0 14px 0",
+                  fontSize: "0.58rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.5)",
+                }}
+              >
+                Select a role to explore
+              </p>
+              {DEPTS.map((dept) => (
+                <HeroDeptCard
+                  key={dept.key}
+                  dept={dept}
+                  onEnter={handleEnter}
+                  loading={loading}
+                  active={activeDept === dept.key}
+                  onHover={() => handleCardHover(dept.key)}
+                  onLeave={handleCardLeave}
+                />
+              ))}
+            </div>
+
+            {error && (
+              <p style={{ marginTop: 16, fontSize: "0.75rem", color: "#f87171" }}>{error}</p>
+            )}
           </div>
 
-          {error && (
-            <p style={{ marginTop: 16, fontSize: "0.75rem", color: "#f87171" }}>{error}</p>
-          )}
-        </div>
-
-        {/* right */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <MockChatWindow deptKey={activeDept} />
+          {/* right */}
+          <div style={{ maxWidth: "87%", marginTop: 28, marginLeft: 60 }}>
+            <MockChatWindow deptKey={activeDept} />
+          </div>
         </div>
       </section>
 
