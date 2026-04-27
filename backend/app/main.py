@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.api.routes import admin, auth, documents, health, ingest, query
 from app.config import configure_langsmith, get_settings
@@ -11,7 +13,7 @@ from app.retrieval.dense import load_dense_client
 from app.retrieval.embedder import load_embedder
 from app.retrieval.reranker import load_reranker
 from app.retrieval.sparse import load_sparse_index
-from app.state import init_semaphore
+from app.state import init_semaphore, limiter
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -41,6 +43,9 @@ app = FastAPI(
     docs_url="/docs" if _s.app_env == "development" else None,
     redoc_url=None,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

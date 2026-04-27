@@ -9,11 +9,15 @@ const DEPT_BG = {
 function toBoldHtml(text) {
   const markers = (text.match(/\*\*/g) || []).length
   const cleaned = markers % 2 !== 0 ? text.replace(/\*\*(?=[^*]*$)/, '') : text
-  return cleaned
+  const escaped = cleaned
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
+    .replace(/\*\*(.*?)\*\*/gs, '<strong style="font-weight:600;color:rgba(255,255,255,0.95)">$1</strong>')
+  return escaped
+    .split(/\n\n+/)
+    .map((p) => `<p style="margin:0 0 14px 0;line-height:1.6">${p.replace(/\n/g, '<br>')}</p>`)
+    .join('')
 }
 
 export default function MessageBubble({ role, content, userRole, sources, streaming }) {
@@ -35,11 +39,13 @@ export default function MessageBubble({ role, content, userRole, sources, stream
   return (
     <div
       className={`flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}
-      style={{ animation: 'msgFadeIn 0.2s ease both' }}
+      style={{ maxWidth: 700, width: '100%', animation: 'msgFadeIn 0.2s ease both' }}
     >
       <div
-        className="max-w-[78%] px-3.5 py-2.5 text-sm leading-relaxed"
+        className="max-w-[78%] text-sm"
         style={{
+          padding: '18px 20px',
+          lineHeight: 1.6,
           borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
           ...(isUser
             ? { background: userBg, color: '#fff', whiteSpace: 'pre-wrap' }
@@ -48,10 +54,7 @@ export default function MessageBubble({ role, content, userRole, sources, stream
       >
         {isUser
           ? content
-          : <span
-              style={{ whiteSpace: 'pre-wrap' }}
-              dangerouslySetInnerHTML={{ __html: toBoldHtml(content) }}
-            />
+          : <span dangerouslySetInnerHTML={{ __html: toBoldHtml(content) }} />
         }
       </div>
       {unique.length > 0 && (
@@ -59,7 +62,10 @@ export default function MessageBubble({ role, content, userRole, sources, stream
           {unique.map((s) => <SourceCard key={s.source || s.chunk_id} source={s} />)}
         </div>
       )}
-      <style>{`@keyframes msgFadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }`}</style>
+      <style>{`
+        @keyframes msgFadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
+        .msg-body p:last-child { margin-bottom: 0 !important; }
+      `}</style>
     </div>
   )
 }

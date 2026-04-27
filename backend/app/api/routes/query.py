@@ -21,16 +21,16 @@ async def query(
     if not body.stream:
         try:
             result = await run_query(body.query, current_user.role, body.top_k)
-        except Exception as exc:
+        except Exception:
             logger.exception("Query route error user=%s", current_user.id)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Query failed")
         return QueryResponse(answer=result["answer"], sources=result["sources"])
 
     try:
         stream, sources = await run_query_stream(body.query, current_user.role, body.top_k)
-    except Exception as exc:
+    except Exception:
         logger.exception("Stream query route error user=%s", current_user.id)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Query failed")
 
     async def event_stream():
         tokens = []

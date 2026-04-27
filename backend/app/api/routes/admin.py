@@ -60,9 +60,9 @@ async def remove_document(
     try:
         await delete_document(db, document_id)
         logger.info("DELETE /admin/documents/%s — completed successfully", document_id)
-    except ValueError as exc:
-        logger.warning("DELETE /admin/documents/%s — not found: %s", document_id, exc)
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ValueError:
+        logger.warning("DELETE /admin/documents/%s — not found", document_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
     except Exception:
         logger.exception("DELETE /admin/documents/%s — unexpected error", document_id)
         raise HTTPException(
@@ -91,8 +91,8 @@ async def update_user_active(
 ):
     try:
         user = await set_user_active(db, user_id, body.is_active)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return UserAdminResponse.model_validate(user)
 
 

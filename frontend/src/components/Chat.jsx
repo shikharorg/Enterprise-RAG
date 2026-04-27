@@ -44,7 +44,7 @@ export default function Chat({ onSend, disabled, userRole }) {
     <form
       onSubmit={(e) => { e.preventDefault(); submit() }}
       className="flex items-end gap-2.5 rounded-[14px] px-3.5 py-2.5"
-      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
+      style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.08)' }}
     >
       <textarea
         ref={textareaRef}
@@ -54,7 +54,7 @@ export default function Chat({ onSend, disabled, userRole }) {
         placeholder="Ask a question about your department's documents…"
         rows={1}
         disabled={disabled}
-        className="flex-1 resize-none text-sm focus:outline-none disabled:opacity-50 placeholder:text-white/25"
+        className="flex-1 resize-none text-sm focus:outline-none disabled:opacity-50 placeholder:text-white/40"
         style={{
           lineHeight: '1.5rem',
           background: 'transparent',

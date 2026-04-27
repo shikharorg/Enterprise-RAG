@@ -117,6 +117,7 @@ const TECH_GROUPS = [
       { name: "Qdrant", desc: "Vector store" },
       { name: "BM25s", desc: "Sparse retrieval" },
       { name: "Hybrid Search", desc: "BM25 + dense fusion" },
+      { name: "RRF Fusion", desc: "Reciprocal rank fusion" },
       { name: "bge-small", desc: "Embeddings" },
     ],
   },
@@ -133,6 +134,24 @@ const TECH_GROUPS = [
       { name: "FastAPI", desc: "Async Python API" },
       { name: "PostgreSQL", desc: "User store" },
       { name: "React", desc: "Frontend" },
+      { name: "Nginx", desc: "Reverse proxy" },
+      { name: "Docker", desc: "Containerized deployment" },
+      { name: "JWT", desc: "Auth tokens" },
+    ],
+  },
+  {
+    label: "SECURITY",
+    items: [
+      { name: "RBAC", desc: "Role-gated retrieval" },
+      { name: "HttpOnly Cookies", desc: "XSS protection" },
+      { name: "Rate Limiting", desc: "Brute force protection" },
+    ],
+  },
+  {
+    label: "OBSERVABILITY",
+    items: [
+      { name: "LangSmith", desc: "Query tracing" },
+      { name: "RAGAS", desc: "RAG evaluation" },
     ],
   },
 ];
@@ -399,7 +418,7 @@ function HeroDeptCard({ dept, onEnter, loading, active, onHover, onLeave }) {
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
 
-  const borderColor = active ? dept.accent : hovered ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.10)";
+  const borderColor = active ? "rgba(255,255,255,0.08)" : hovered ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.08)";
 
   return (
     <div
@@ -409,23 +428,18 @@ function HeroDeptCard({ dept, onEnter, loading, active, onHover, onLeave }) {
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => setPressed(false)}
       style={{
-        background: active ? "rgba(255,255,255,0.06)" : "transparent",
+        background: active ? "rgba(255,255,255,0.04)" : "transparent",
         borderTop: `1px solid ${borderColor}`,
         borderRight: `1px solid ${borderColor}`,
         borderBottom: `1px solid ${borderColor}`,
-        borderLeft: active ? `4px solid ${dept.accent}` : `1px solid ${borderColor}`,
-        boxShadow: active
-          ? `0 0 0 1px ${dept.accent}30, 0 0 27px ${dept.accent}27`
-          : hovered
-          ? "none"
-          : "none",
+        borderLeft: active ? `4px solid ${dept.accent}66` : `1px solid ${borderColor}`,
         padding: active ? "12px 20px 12px 17px" : "12px 20px",
         display: "flex",
         alignItems: "center",
         gap: 14,
         cursor: loading !== null ? "not-allowed" : "pointer",
-        transition: "background 0.15s, box-shadow 0.15s, transform 0.15s",
-        transform: hovered && !pressed ? "scale(1.01)" : pressed ? "scale(0.99)" : "scale(1)",
+        transition: "background 0.15s, border-color 0.15s, transform 0.1s",
+        transform: hovered && !pressed ? "scale(1.005)" : pressed ? "scale(0.99)" : "scale(1)",
         opacity: loading !== null && loading !== dept.email ? 0.4 : 1,
         userSelect: "none",
       }}
@@ -438,15 +452,14 @@ function HeroDeptCard({ dept, onEnter, loading, active, onHover, onLeave }) {
           background: active ? dept.accent : `${dept.accent}60`,
           flexShrink: 0,
           transition: "background 0.15s",
-          boxShadow: active ? `0 0 6px ${dept.accent}` : "none",
         }}
       />
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "0.8rem", fontWeight: 600, color: active ? "#fff" : dept.accent, letterSpacing: "-0.01em" }}>
+        <div style={{ fontSize: "0.8rem", fontWeight: 600, color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.60)", letterSpacing: "-0.01em" }}>
           {loading === dept.email ? "Signing in…" : dept.name}
         </div>
-        <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.32)", marginTop: 2, lineHeight: 1.4 }}>
+        <div style={{ fontSize: "0.72rem", color: active ? "rgba(255,255,255,0.40)" : "rgba(255,255,255,0.30)", marginTop: 2, lineHeight: 1.4 }}>
           {dept.tagline}
         </div>
       </div>
@@ -660,14 +673,14 @@ export default function LandingPage() {
         <p style={{ fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", margin: "0 0 48px 0" }}>
           Built on
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 0 }}>
           {TECH_GROUPS.map((group, i) => (
             <div
               key={group.label}
               style={{
                 borderLeft: i === 0 ? "none" : "1px solid rgba(255,255,255,0.07)",
-                paddingLeft: i === 0 ? 0 : 40,
-                paddingRight: 40,
+                paddingLeft: i === 0 ? 0 : 32,
+                paddingRight: i === TECH_GROUPS.length - 1 ? 0 : 32,
               }}
             >
               <span

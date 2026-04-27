@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user
@@ -13,6 +13,7 @@ from app.services.auth_service import (
     rotate_refresh_token,
 )
 from app.config import get_settings
+from app.state import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 _s = get_settings()
@@ -28,18 +29,19 @@ _COOKIE_OPTS = {
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     try:
         user = await register_user(db, body.email, body.password, body.role)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
     return UserResponse(id=str(user.id), email=user.email, role=user.role)
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(body: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, body: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
     try:
         user = await authenticate_user(db, body.email, body.password)
         access, refresh = await create_tokens(db, user)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     response.set_cookie("access_token", access, max_age=_s.jwt_access_token_expire_minutes * 60, **_COOKIE_OPTS)
     response.set_cookie("refresh_token", refresh, max_age=_s.jwt_refresh_token_expire_days * 86400, **_COOKIE_OPTS)
@@ -56,8 +58,8 @@ async def refresh(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
     try:
         access, new_refresh, _ = await rotate_refresh_token(db, refresh_token)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token invalid or expired")
 
     response.set_cookie("access_token", access, max_age=_s.jwt_access_token_expire_minutes * 60, **_COOKIE_OPTS)
     response.set_cookie("refresh_token", new_refresh, max_age=_s.jwt_refresh_token_expire_days * 86400, **_COOKIE_OPTS)

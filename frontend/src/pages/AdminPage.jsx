@@ -47,7 +47,7 @@ function Tooltip({ text, children }) {
   const [vis, setVis] = useState(false)
   return (
     <span
-      style={{ position: 'relative', display: 'inline-flex' }}
+      style={{ position: 'relative', display: 'inline-flex', overflow: 'visible' }}
       onMouseEnter={() => setVis(true)}
       onMouseLeave={() => setVis(false)}
     >
@@ -56,8 +56,8 @@ function Tooltip({ text, children }) {
         <span style={{
           position: 'absolute',
           bottom: 'calc(100% + 6px)',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          right: 0,
+          left: 'auto',
           padding: '4px 8px',
           background: '#1a1a1a',
           border: '1px solid rgba(255,255,255,0.12)',
@@ -383,7 +383,7 @@ export default function AdminPage() {
               ) : docsError ? (
                 <p className="px-6 py-12 text-center text-sm text-rose-400">{docsError}</p>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-hidden">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10">
@@ -448,7 +448,7 @@ export default function AdminPage() {
             ) : usersError ? (
               <p className="px-6 py-12 text-center text-sm text-rose-400">{usersError}</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/10">

@@ -12,6 +12,12 @@ const DEPT = {
   finance:     { dot: '#34d399', text: '#34d399', bg: 'rgba(16,185,129,0.10)',  btn: '#059669' },
 }
 
+const DEPT_NAMES = {
+  hr: 'Human Resources',
+  engineering: 'Engineering',
+  finance: 'Finance',
+}
+
 const SUGGESTIONS = {
   hr:          ['What is the vacation and PTO policy?', 'How does the performance review process work?', 'What health benefits are available?'],
   engineering: ['What is the deployment and release process?', 'How are production incidents handled?', 'What are the API design and versioning standards?'],
@@ -67,9 +73,12 @@ export default function ChatPage() {
           <div className="flex items-center gap-3">
             {d && (
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: d.dot }} />
-                <span className="text-xs font-medium capitalize" style={{ color: d.text }}>
-                  {user?.role}
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: d.dot, boxShadow: `0 0 6px ${d.dot}` }}
+                />
+                <span className="text-sm font-semibold" style={{ color: '#fff', letterSpacing: '-0.01em' }}>
+                  {DEPT_NAMES[user?.role] ?? user?.role}
                 </span>
               </div>
             )}
@@ -97,8 +106,8 @@ export default function ChatPage() {
         </header>
 
         {/* Messages */}
-        <div ref={messagesRef} className="flex-1 overflow-y-auto px-5 py-6">
-          <div className="max-w-[620px] mx-auto flex flex-col gap-4 min-h-full">
+        <div ref={messagesRef} className="flex-1 overflow-y-auto px-5 pt-10 pb-6 chat-scroll">
+          <div className="max-w-[700px] mx-auto flex flex-col gap-4 min-h-full">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center min-h-[55vh] text-center">
                 {d && (
@@ -159,7 +168,7 @@ export default function ChatPage() {
           className="flex-shrink-0 px-5 py-3.5"
           style={{ background: 'rgba(10,10,10,0.90)', borderTop: '1px solid rgba(255,255,255,0.07)' }}
         >
-          <div className="max-w-[620px] mx-auto">
+          <div className="max-w-[700px] mx-auto">
             <Chat onSend={sendQuery} disabled={thinking} userRole={user?.role} />
           </div>
         </div>
@@ -187,7 +196,7 @@ export default function ChatPage() {
         </div>
 
         {/* Doc list */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 doc-scroll">
           {docsLoading ? (
             <div className="flex items-center gap-2 px-2 py-3">
               <div className="w-3 h-3 rounded-full border border-white/20 border-t-white/50 animate-spin" />
@@ -196,14 +205,14 @@ export default function ChatPage() {
           ) : docs.length === 0 ? (
             <p className="px-2 text-[11px]" style={{ color: 'rgba(255,255,255,0.20)' }}>No documents found.</p>
           ) : (
-            <ul className="space-y-px">
+            <ul className="space-y-1">
               {docs.map((doc) => (
                 <li key={doc.id}>
                   <button
                     onClick={() => setSelectedDoc(selectedDoc === doc.id ? null : doc.id)}
-                    className="w-full text-left px-2.5 py-2 rounded-[10px] transition-colors"
+                    className="w-full text-left px-2.5 py-2 rounded-[10px] transition-colors hover:bg-white/[0.04]"
                     style={{
-                      background: selectedDoc === doc.id ? d?.bg : 'transparent',
+                      background: selectedDoc === doc.id ? d?.bg : undefined,
                       border: 'none',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
