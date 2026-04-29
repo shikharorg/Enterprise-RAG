@@ -1,4 +1,25 @@
 services:
+  fastapi:
+    build: .
+    container_name: rag_fastapi
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    networks:
+      - rag_internal
+      - n8n_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fastapi.rule=Host(`rag.shikharjain.com`)"
+      - "traefik.http.routers.fastapi.tls=true"
+      - "traefik.http.routers.fastapi.entrypoints=web,websecure"
+      - "traefik.http.routers.fastapi.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.fastapi.loadbalancer.server.port=8000"
+
   postgres:
     image: postgres:16-alpine
     container_name: rag_postgres
@@ -9,8 +30,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-rag_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "127.0.0.1:5432:5432"
     networks:
       - rag_internal
     healthcheck:
@@ -27,9 +46,6 @@ services:
       QDRANT__STORAGE__ON_DISK_PAYLOAD: "true"
     volumes:
       - qdrant_data:/qdrant/storage
-    ports:
-      - "127.0.0.1:6333:6333"
-      - "127.0.0.1:6334:6334"
     networks:
       - rag_internal
     mem_limit: 2g
@@ -37,6 +53,8 @@ services:
 networks:
   rag_internal:
     driver: bridge
+  n8n_default:
+    external: true
 
 volumes:
   postgres_data:

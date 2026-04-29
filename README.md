@@ -22,7 +22,7 @@ A retrieval-augmented generation system modeling a role-restricted enterprise kn
 | Evaluation | RAGAS |
 | Rate limiting | slowapi |
 | Frontend | React, Vite, Tailwind CSS |
-| Infrastructure | Docker, PostgreSQL, Nginx, Let's Encrypt |
+| Infrastructure | Docker, Traefik, Let's Encrypt |
 
 ---
 
@@ -74,43 +74,22 @@ git clone https://github.com/Sky9911/rag-enterprise.git
 cd rag-enterprise
 ```
 
-Create `backend/.env`:
+Copy `backend/.env.example` to `backend/.env` and fill in your values:
 
-```env
-POSTGRES_USER=rag_user
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=rag_db
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-
-QDRANT_HOST=localhost
-QDRANT_PORT=6333
-QDRANT_COLLECTION=rag_documents
-
-JWT_SECRET_KEY=your_secret_key
-JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
-JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
-
-OPENAI_API_KEY=your_openai_key
-OPENAI_MODEL=gpt-4o-mini
-
-APP_ENV=development
-CORS_ORIGIN=http://localhost:5173
-
-LANGCHAIN_TRACING_V2=false
-LANGCHAIN_API_KEY=
-LANGCHAIN_PROJECT=rag-enterprise
+```bash
+cp backend/.env.example backend/.env
 ```
 
-### Start Infrastructure
+For local development, set `POSTGRES_HOST=localhost`, `QDRANT_HOST=localhost`, `APP_ENV=development`, and `CORS_ORIGIN=http://localhost:5173`. The `.env.example` defaults are configured for Docker deployment — adjust accordingly.
+
+### Start Infrastructure (local dev)
+
+For local development, start only the database services:
 
 ```bash
 cd backend
-docker compose up -d
+docker compose up postgres qdrant -d
 ```
-
-This starts PostgreSQL on `127.0.0.1:5432` and Qdrant on `127.0.0.1:6333`.
 
 ### Install Backend Dependencies
 
@@ -150,13 +129,14 @@ python scripts/run_ingestion.py --department finance --dir data/finance/ --uploa
 
 Ingestion chunks documents, embeds them with bge-small, pushes vectors and payloads to Qdrant, and serializes the BM25s index to disk.
 
-### Start the Backend
+### Start the Backend (local dev)
 
 ```bash
+cd backend
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 ```
 
-### Start the Frontend
+### Start the Frontend (local dev)
 
 ```bash
 cd frontend
@@ -165,6 +145,33 @@ npm run dev
 ```
 
 The app is available at `http://localhost:5173`.
+
+---
+
+## Production Deployment
+
+The `backend/docker-compose.yml` defines four services: Traefik, FastAPI, Qdrant, and PostgreSQL. Traefik handles TLS termination via Let's Encrypt and HTTP-to-HTTPS redirect. FastAPI is built from `backend/Dockerfile`.
+
+```bash
+cd backend
+cp .env.example .env
+# Edit .env — set real passwords, OPENAI_API_KEY, TRAEFIK_EMAIL
+# Leave POSTGRES_HOST=postgres and QDRANT_HOST=qdrant (Docker service names)
+docker compose up -d --build
+```
+
+Traefik will request a certificate for `rag.shikharjain.com` on first startup. Port 80 and 443 must be open on the host. The Let's Encrypt certificate is stored in the `letsencrypt_data` Docker volume.
+
+To seed users and ingest documents after the stack is running:
+
+```bash
+# Shell into the FastAPI container
+docker exec -it rag_fastapi bash
+
+# Then run scripts inside the container
+python scripts/create_user.py --email hr@demo.com --password hr-demo-2026 --role hr
+python scripts/run_ingestion.py --department hr --dir data/hr/ --uploader-id <admin-uuid>
+```
 
 ---
 

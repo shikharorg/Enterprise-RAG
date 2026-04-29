@@ -134,7 +134,7 @@ const TECH_GROUPS = [
       { name: "FastAPI", desc: "Async Python API" },
       { name: "PostgreSQL", desc: "User store" },
       { name: "React", desc: "Frontend" },
-      { name: "Nginx", desc: "Reverse proxy" },
+      { name: "Traefik", desc: "Reverse proxy + TLS" },
       { name: "Docker", desc: "Containerized deployment" },
       { name: "JWT", desc: "Auth tokens" },
     ],
