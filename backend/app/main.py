@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from starlette.staticfiles import StaticFiles
 
 from app.api.routes import admin, auth, documents, health, ingest, query
 from app.config import configure_langsmith, get_settings
@@ -75,4 +74,3 @@ if _STATIC_DIR.exists():
             return FileResponse(file_path)
         return FileResponse(_STATIC_DIR / "index.html")
 
-    app.mount("/", StaticFiles(directory=_STATIC_DIR, html=True), name="frontend")
