@@ -1,6 +1,8 @@
 services:
   fastapi:
-    build: .
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
     container_name: rag_fastapi
     restart: unless-stopped
     env_file: .env

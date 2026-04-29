@@ -1,9 +1,12 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.staticfiles import StaticFiles
 
 from app.api.routes import admin, auth, documents, health, ingest, query
 from app.config import configure_langsmith, get_settings
@@ -61,3 +64,15 @@ app.include_router(admin.router, prefix="/api/v1")
 app.include_router(query.router, prefix="/api/v1")
 app.include_router(ingest.router, prefix="/api/v1")
 app.include_router(documents.router, prefix="/api/v1")
+
+_STATIC_DIR = Path("/app/frontend/dist")
+
+if _STATIC_DIR.exists():
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str):
+        file_path = _STATIC_DIR / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(_STATIC_DIR / "index.html")
+
+    app.mount("/", StaticFiles(directory=_STATIC_DIR, html=True), name="frontend")
