@@ -70,7 +70,7 @@ Responses stream over SSE using FastAPI's `StreamingResponse`. Tokens arrive fro
 ### Clone and Configure
 
 ```bash
-git clone https://github.com/Sky9911/rag-enterprise.git
+git clone https://github.com/shikharorg/Enterprise-RAG.git
 cd rag-enterprise
 ```
 
