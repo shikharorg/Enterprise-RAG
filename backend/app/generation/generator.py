@@ -36,10 +36,13 @@ def _build_prompt(query: str, chunks: list[dict]) -> list[dict]:
             "role": "system",
             "content": (
                 "You are a helpful enterprise knowledge assistant. "
+                "IMPORTANT: If the user's message is a greeting or very short casual message with no question "
+                "(like 'hi', 'hello', 'thanks', 'good'), do NOT use the context documents at all. "
+                "Just respond warmly and briefly as a helpful assistant would, then invite them to ask about their department's documents. "
+                "The context documents below are only relevant when the user asks an actual question. "
+                "You are a helpful enterprise knowledge assistant. "
                 "Answer the user's question using only the context provided. "
                 "Cite sources by their bracketed number, e.g. [1]. "
-                "If the user sends a greeting or casual conversational message (e.g. hi, hello, hey, good morning, how are you, thanks), "
-                "respond warmly and briefly, then invite them to ask about their department's documents. "
                 "Only if the question is a genuine off-topic request unrelated to work (e.g. write me a poem, what is the weather), "
                 "respond with exactly: "
                 "\"I can only answer questions based on your department's documents.\""
@@ -68,11 +71,31 @@ def _extract_sources(chunks: list[dict]) -> list[dict]:
 
 _FALLBACK = "I can only answer questions based on your department's documents."
 
+_GREETING_MESSAGES = [
+    {
+        "role": "system",
+        "content": (
+            "You are a helpful enterprise knowledge assistant. "
+            "If the user sends a greeting or casual message, respond warmly and briefly, "
+            "then invite them to ask about their department's documents. "
+            "If the question is genuinely off-topic (not a greeting), respond with exactly: "
+            "'I can only answer questions based on your department's documents.'"
+        ),
+    },
+]
+
 
 async def generate(query: str, chunks: list[dict]) -> dict:
     if not chunks:
-        logger.info("No chunks retrieved for query=%r, returning fallback", query[:60])
-        return {"answer": _FALLBACK, "sources": []}
+        logger.info("No chunks retrieved for query=%r, calling LLM for greeting handling", query[:60])
+        messages = [*_GREETING_MESSAGES, {"role": "user", "content": query}]
+        response = await get_client().chat.completions.create(
+            model=_s.openai_model,
+            messages=messages,
+            temperature=0.2,
+            max_tokens=256,
+        )
+        return {"answer": response.choices[0].message.content, "sources": []}
 
     messages = _build_prompt(query, chunks)
     sources = _extract_sources(chunks)
@@ -96,8 +119,19 @@ async def generate(query: str, chunks: list[dict]) -> dict:
 
 async def generate_stream(query: str, chunks: list[dict]) -> AsyncIterator[str]:
     if not chunks:
-        logger.info("No chunks retrieved for query=%r, returning fallback", query[:60])
-        yield _FALLBACK
+        logger.info("No chunks retrieved for query=%r, calling LLM for greeting handling", query[:60])
+        messages = [*_GREETING_MESSAGES, {"role": "user", "content": query}]
+        stream = await get_client().chat.completions.create(
+            model=_s.openai_model,
+            messages=messages,
+            temperature=0.2,
+            max_tokens=256,
+            stream=True,
+        )
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
         return
 
     messages = _build_prompt(query, chunks)

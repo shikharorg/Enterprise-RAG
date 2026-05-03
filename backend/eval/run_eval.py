@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import concurrent.futures
 import csv
 import json
 import math
@@ -141,7 +142,9 @@ async def run_evaluation() -> tuple[uuid.UUID, dict, Path]:
         return sum(valid) / len(valid) if valid else float("nan")
 
     logger.info("Running RAGAS evaluation on %d samples...", len(rows))
-    result = evaluate(dataset=dataset, metrics=METRICS, llm=llm, embeddings=embeddings)
+    with concurrent.futures.ThreadPoolExecutor() as pool:
+        future = pool.submit(evaluate, dataset=dataset, metrics=METRICS, llm=llm, embeddings=embeddings)
+        result = future.result()
 
     per_metric: dict[str, list] = {m.name: result[m.name] for m in METRICS}
 
@@ -149,7 +152,9 @@ async def run_evaluation() -> tuple[uuid.UUID, dict, Path]:
     if nan_metrics:
         logger.warning("Retrying %d NaN metrics: %s", len(nan_metrics), [m.name for m in nan_metrics])
         try:
-            retry_result = evaluate(dataset=dataset, metrics=nan_metrics, llm=llm, embeddings=embeddings)
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(evaluate, dataset=dataset, metrics=nan_metrics, llm=llm, embeddings=embeddings)
+                retry_result = future.result()
             for m in nan_metrics:
                 retry_scores = retry_result[m.name]
                 if not _is_nan_list(retry_scores):
