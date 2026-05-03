@@ -21,6 +21,7 @@ services:
       - "traefik.http.routers.fastapi.entrypoints=web,websecure"
       - "traefik.http.routers.fastapi.tls.certresolver=mytlschallenge"
       - "traefik.http.services.fastapi.loadbalancer.server.port=8000"
+      - "traefik.docker.network=n8n_default"
 
   postgres:
     image: postgres:16-alpine
