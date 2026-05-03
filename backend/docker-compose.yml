@@ -24,6 +24,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    command: postgres -c ssl=off
     container_name: rag_postgres
     restart: unless-stopped
     environment:
