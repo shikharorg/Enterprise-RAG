@@ -10,7 +10,6 @@ _settings = get_settings()
 
 engine = create_async_engine(
     _settings.database_url,
-    connect_args={"ssl": "disable"},
     pool_size=5,
     max_overflow=10,
     pool_pre_ping=True,
