@@ -37,6 +37,8 @@ COPY --from=frontend /frontend/dist /app/frontend/dist
 
 RUN chown -R appuser:appgroup /app
 
+RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser/.cache
+
 USER appuser
 
 EXPOSE 8000
