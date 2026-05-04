@@ -519,9 +519,31 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: "#0f1115", color: "#fff", fontFamily: FONT, overflowX: "hidden" }}>
+      <style>{`
+        @media (max-width: 1023px) {
+          .hero-section { padding: 48px 24px !important; align-items: flex-start !important; }
+          .hero-grid { grid-template-columns: 1fr !important; column-gap: 0 !important; }
+          .hero-right { max-width: 100% !important; margin-left: 0 !important; margin-top: 36px !important; }
+          .how-it-works-section { padding: 72px 24px !important; }
+          .how-it-works-grid { grid-template-columns: 1fr !important; }
+          .how-it-works-step { border-left: none !important; padding-left: 0 !important; padding-top: 36px !important; border-top: 1px solid rgba(255,255,255,0.07) !important; }
+          .how-it-works-step:first-child { padding-top: 0 !important; border-top: none !important; }
+          .built-on-section { padding: 72px 24px !important; }
+          .built-on-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 36px !important; }
+          .built-on-item { border-left: none !important; padding-left: 0 !important; padding-right: 0 !important; }
+          .landing-footer { padding: 24px !important; }
+        }
+        @media (max-width: 479px) {
+          .hero-section { padding: 40px 20px !important; }
+          .built-on-grid { grid-template-columns: 1fr !important; }
+          .how-it-works-section { padding: 56px 20px !important; }
+          .built-on-section { padding: 56px 20px !important; }
+        }
+      `}</style>
 
       {/* ── HERO ─────────────────────────────────────────── */}
       <section
+        className="hero-section"
         style={{
           minHeight: "100vh",
           display: "flex",
@@ -533,6 +555,7 @@ export default function LandingPage() {
         }}
       >
         <div
+          className="hero-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
@@ -615,7 +638,7 @@ export default function LandingPage() {
           </div>
 
           {/* right */}
-          <div style={{ maxWidth: "87%", marginTop: 28, marginLeft: 60 }}>
+          <div className="hero-right" style={{ maxWidth: "87%", marginTop: 28, marginLeft: 60 }}>
             <MockChatWindow deptKey={activeDept} />
           </div>
         </div>
@@ -623,6 +646,7 @@ export default function LandingPage() {
 
       {/* ── HOW IT WORKS ─────────────────────────────────── */}
       <section
+        className="how-it-works-section"
         style={{
           borderTop: "1px solid rgba(255,255,255,0.07)",
           padding: "120px 48px",
@@ -635,10 +659,11 @@ export default function LandingPage() {
         <p style={{ fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", margin: "0 0 56px 0" }}>
           How it works
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0 }}>
+        <div className="how-it-works-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0 }}>
           {STEPS.map((step, i) => (
             <div
               key={step.n}
+              className="how-it-works-step"
               style={{
                 borderLeft: i === 0 ? "none" : "1px solid rgba(255,255,255,0.07)",
                 paddingLeft: i === 0 ? 0 : 40,
@@ -661,6 +686,7 @@ export default function LandingPage() {
 
       {/* ── TECH ─────────────────────────────────────────── */}
       <section
+        className="built-on-section"
         style={{
           borderTop: "1px solid rgba(255,255,255,0.07)",
           padding: "100px 48px",
@@ -673,10 +699,11 @@ export default function LandingPage() {
         <p style={{ fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", margin: "0 0 48px 0" }}>
           Built on
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 0 }}>
+        <div className="built-on-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 0 }}>
           {TECH_GROUPS.map((group, i) => (
             <div
               key={group.label}
+              className="built-on-item"
               style={{
                 borderLeft: i === 0 ? "none" : "1px solid rgba(255,255,255,0.07)",
                 paddingLeft: i === 0 ? 0 : 32,
@@ -715,6 +742,7 @@ export default function LandingPage() {
 
       {/* ── FOOTER ───────────────────────────────────────── */}
       <footer
+        className="landing-footer"
         style={{
           borderTop: "1px solid rgba(255,255,255,0.07)",
           padding: "28px 48px",

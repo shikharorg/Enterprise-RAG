@@ -67,7 +67,7 @@ export default function ChatPage() {
       >
         {/* Header */}
         <header
-          className="flex-shrink-0 flex items-center justify-between px-5 py-3 z-10"
+          className="flex-shrink-0 flex items-center justify-between px-4 sm:px-5 py-2.5 sm:py-3 z-10"
           style={{ background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
         >
           <div className="flex items-center gap-3">
@@ -84,11 +84,11 @@ export default function ChatPage() {
             )}
             {/* Mobile docs toggle */}
             <button
-              className="md:hidden ml-2 text-xs px-2 py-1 rounded"
-              style={{ color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.10)' }}
+              className="md:hidden ml-2 text-xs px-3 py-1.5 rounded-lg"
+              style={{ color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.12)', background: 'none', cursor: 'pointer' }}
               onClick={() => setDocsOpen((v) => !v)}
             >
-              docs
+              Docs
             </button>
           </div>
           <div className="flex items-center gap-4">
@@ -176,14 +176,23 @@ export default function ChatPage() {
 
       {/* ── RIGHT: Documents panel ──────────────────────── */}
       <aside
-        className={`flex-shrink-0 flex-col ${docsOpen ? 'flex' : 'hidden md:flex'}`}
-        style={{ width: 260, background: '#0f0f0f' }}
+        className={`flex-col flex-shrink-0 md:w-[260px] ${docsOpen ? 'flex fixed inset-0 z-50 w-full md:relative md:inset-auto md:z-auto' : 'hidden md:flex'}`}
+        style={{ background: '#0f0f0f' }}
       >
         {/* Panel header */}
         <div className="px-4 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-2" style={{ color: 'rgba(255,255,255,0.20)' }}>
-            Documents
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+              Documents
+            </p>
+            <button
+              className="md:hidden text-[11px] px-2 py-0.5 rounded"
+              style={{ color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.12)', background: 'none', cursor: 'pointer' }}
+              onClick={() => setDocsOpen(false)}
+            >
+              ✕ Close
+            </button>
+          </div>
           <div className="flex items-center gap-1.5">
             {d && <span className="w-1.5 h-1.5 rounded-full" style={{ background: d.dot }} />}
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: d?.text }}>

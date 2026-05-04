@@ -286,24 +286,24 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
-      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-white">Enterprise Knowledge Base</span>
-          <span className="text-white/20">/</span>
-          <span className="text-sm text-white/40">Admin Panel</span>
+      <header className="border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-sm font-semibold text-white truncate">Enterprise Knowledge Base</span>
+          <span className="text-white/20 hidden sm:inline">/</span>
+          <span className="text-sm text-white/40 hidden sm:inline">Admin Panel</span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-white/30">{user?.email}</span>
+        <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+          <span className="text-xs text-white/30 hidden sm:inline">{user?.email}</span>
           <button
             onClick={logout}
-            className="text-xs text-white/40 hover:text-white/70 transition-colors"
+            className="text-xs text-white/40 hover:text-white/70 transition-colors py-1.5 px-1"
           >
             Sign out
           </button>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex gap-1 mb-8 border-b border-white/10">
           {TABS.map((t) => (
             <button
@@ -324,9 +324,9 @@ export default function AdminPage() {
           <div className="space-y-6">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
               <h2 className="text-sm font-semibold text-white mb-4">Upload Document</h2>
-              <form onSubmit={handleUpload} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <form onSubmit={handleUpload} className="flex flex-col gap-3">
                 <div
-                  className="flex-1 flex gap-3 items-center"
+                  className="flex flex-col sm:flex-row gap-3 items-start sm:items-center"
                   style={isDemoAdmin ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
                 >
                   <input
@@ -383,7 +383,7 @@ export default function AdminPage() {
               ) : docsError ? (
                 <p className="px-6 py-12 text-center text-sm text-rose-400">{docsError}</p>
               ) : (
-                <div className="overflow-x-hidden">
+                <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10">
@@ -448,7 +448,7 @@ export default function AdminPage() {
             ) : usersError ? (
               <p className="px-6 py-12 text-center text-sm text-rose-400">{usersError}</p>
             ) : (
-              <div className="overflow-x-hidden">
+              <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/10">
@@ -517,7 +517,7 @@ export default function AdminPage() {
 
         {tab === 'eval' && (
           <div className="space-y-6">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
               <div>
                 <h2 className="text-sm font-semibold text-white">RAGAS Evaluation</h2>
                 {lastRunAt ? (
@@ -526,7 +526,7 @@ export default function AdminPage() {
                   <p className="mt-1 text-xs text-white/30">No runs yet.</p>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-start sm:items-end gap-2">
                 {isDemoAdmin ? (
                   <Tooltip text="Demo accounts cannot run evaluations.">
                     <button
