@@ -2,12 +2,6 @@ from pydantic import BaseModel, EmailStr
 from app.db.models import RoleEnum
 
 
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str
-    role: RoleEnum
-
-
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str

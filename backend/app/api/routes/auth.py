@@ -4,11 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_current_user
 from app.db.models import User
 from app.db.postgres import get_db
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.schemas.auth import LoginRequest, TokenResponse, UserResponse
 from app.services.auth_service import (
     authenticate_user,
     create_tokens,
-    register_user,
     revoke_refresh_token,
     rotate_refresh_token,
 )
@@ -23,15 +22,6 @@ _COOKIE_OPTS = {
     "samesite": "lax",
     "secure": _s.app_env == "production",
 }
-
-
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    try:
-        user = await register_user(db, body.email, body.password, body.role)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
-    return UserResponse(id=str(user.id), email=user.email, role=user.role)
 
 
 @router.post("/login", response_model=TokenResponse)
