@@ -11,17 +11,10 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
+    ports:
+      - "8000:8000"
     networks:
       - rag_internal
-      - n8n_default
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.fastapi.rule=Host(`rag.shikharjain.com`)"
-      - "traefik.http.routers.fastapi.tls=true"
-      - "traefik.http.routers.fastapi.entrypoints=web,websecure"
-      - "traefik.http.routers.fastapi.tls.certresolver=mytlschallenge"
-      - "traefik.http.services.fastapi.loadbalancer.server.port=8000"
-      - "traefik.docker.network=n8n_default"
 
   postgres:
     image: postgres:16-alpine
@@ -57,8 +50,6 @@ services:
 networks:
   rag_internal:
     driver: bridge
-  n8n_default:
-    external: true
 
 volumes:
   postgres_data:
