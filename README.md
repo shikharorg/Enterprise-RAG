@@ -2,7 +2,15 @@
 
 A retrieval-augmented generation system modeling a role-restricted enterprise knowledge base split across three departments: HR, Engineering, and Finance. Each user role can only retrieve documents tagged for their department. RBAC is enforced at the Qdrant query layer, not in application code after retrieval, so restricted chunks never enter the LLM context. Retrieval uses a hybrid pipeline: dense embeddings fused with BM25 sparse scores via Reciprocal Rank Fusion, followed by a cross-encoder reranker. Answers stream back token by token via SSE.
 
-**Live demo:** [rag.shikharjain.com](https://rag.shikharjain.com)
+---
+
+## Screenshots
+
+![Landing Page](screenshots/landing.png)
+![Chat Interface](screenshots/chat.png)
+![Admin Panel - Documents](screenshots/admin1.png)
+![Admin Panel - Users](screenshots/admin2.png)
+![Admin Panel - Evaluation](screenshots/admin3.png)
 
 ---
 
@@ -22,7 +30,7 @@ A retrieval-augmented generation system modeling a role-restricted enterprise kn
 | Evaluation | RAGAS |
 | Rate limiting | slowapi |
 | Frontend | React, Vite, Tailwind CSS |
-| Infrastructure | Docker, Traefik, Let's Encrypt |
+| Infrastructure | Docker |
 
 ---
 
@@ -150,17 +158,15 @@ The app is available at `http://localhost:5173`.
 
 ## Production Deployment
 
-The `backend/docker-compose.yml` defines four services: Traefik, FastAPI, Qdrant, and PostgreSQL. Traefik handles TLS termination via Let's Encrypt and HTTP-to-HTTPS redirect. FastAPI is built from `backend/Dockerfile`.
+The `backend/docker-compose.yml` defines three services: FastAPI, Qdrant, and PostgreSQL. FastAPI is built from `backend/Dockerfile` with the build context set to the project root. The API is exposed on port 8000.
 
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env — set real passwords, OPENAI_API_KEY, TRAEFIK_EMAIL
+# Edit .env — set real passwords, OPENAI_API_KEY
 # Leave POSTGRES_HOST=postgres and QDRANT_HOST=qdrant (Docker service names)
 docker compose up -d --build
 ```
-
-Traefik will request a certificate for `rag.shikharjain.com` on first startup. Port 80 and 443 must be open on the host. The Let's Encrypt certificate is stored in the `letsencrypt_data` Docker volume.
 
 To seed users and ingest documents after the stack is running:
 
