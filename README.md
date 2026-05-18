@@ -56,13 +56,13 @@ Responses stream over SSE using FastAPI's `StreamingResponse`. Tokens arrive fro
 
 ## Key Design Decisions
 
-**BM25s over Elasticsearch.** Elasticsearch requires a minimum 1.5GB JVM heap. On a 2-CPU, 8GB VPS that is already running Qdrant, PostgreSQL, two embedding models, and two Uvicorn workers, that is not viable. BM25s is a pure-Python library that loads a serialized index from disk at startup and runs entirely in-process. Memory footprint is around 100-300MB.
+**BM25s over Elasticsearch.** Elasticsearch requires a minimum 1.5GB JVM heap. BM25s is a pure-Python library that loads a serialized index from disk at startup and runs entirely in-process. Memory footprint is around 100-300MB.
 
 **RBAC at retrieval, not API layer.** The alternative is to retrieve broadly and then filter results by role before assembling the prompt. That approach still loads restricted content into the retrieval pipeline and passes it to the LLM context before any filter runs. Putting the filter in the Qdrant query means the database never returns documents the user cannot access, regardless of what happens in application code.
 
-**bge-small over bge-large (or similar).** bge-small-en-v1.5 is 33M parameters and uses around 500MB of RAM on CPU. bge-large would require 1.3GB or more. With the reranker (MiniLM, ~300MB) and two Uvicorn workers also sharing the process space, a larger embedding model would exhaust available RAM and trigger swap. For a knowledge base of this size, bge-small retrieval quality is sufficient, and the cross-encoder reranker corrects ranking errors before generation.
+**bge-small over bge-large (or similar).** bge-small-en-v1.5 is 33M parameters and uses around 500MB of RAM on CPU. bge-large would require 1.3GB or more. For a knowledge base of this size, bge-small retrieval quality is sufficient, and the cross-encoder reranker corrects ranking errors before generation.
 
-**Two Uvicorn workers, no more.** Each worker loads the embedding model and reranker independently. A third worker would add another ~800MB of model weight copies to RAM. The concurrency limit is handled differently: a semaphore of 5 allows up to 5 simultaneous RAG queries across both workers, queuing requests rather than rejecting them. The rate limit (10 req/min per user via slowapi) keeps individual users from exhausting the queue.
+**Two Uvicorn workers, no more.** Each worker loads the embedding model and reranker independently. The concurrency limit is handled differently: a semaphore of 5 allows up to 5 simultaneous RAG queries across both workers, queuing requests rather than rejecting them. The rate limit (10 req/min per user via slowapi) keeps individual users from exhausting the queue.
 
 ---
 
@@ -156,30 +156,6 @@ The app is available at `http://localhost:5173`.
 
 ---
 
-## Production Deployment
-
-The `backend/docker-compose.yml` defines three services: FastAPI, Qdrant, and PostgreSQL. FastAPI is built from `backend/Dockerfile` with the build context set to the project root. The API is exposed on port 8000.
-
-```bash
-cd backend
-cp .env.example .env
-# Edit .env — set real passwords, OPENAI_API_KEY
-# Leave POSTGRES_HOST=postgres and QDRANT_HOST=qdrant (Docker service names)
-docker compose up -d --build
-```
-
-To seed users and ingest documents after the stack is running:
-
-```bash
-# Shell into the FastAPI container
-docker exec -it rag_fastapi bash
-
-# Then run scripts inside the container
-python scripts/create_user.py --email hr@demo.com --password hr-demo-2026 --role hr
-python scripts/run_ingestion.py --department hr --dir data/hr/ --uploader-id <admin-uuid>
-```
-
----
 
 ## Evaluation
 
